@@ -39,7 +39,8 @@ get_cwd(State) ->
                             user=User}}.
 
 is_dir(AbsPath, State) ->
-    {filelib:is_dir(AbsPath), State}.
+    IsDir = lists:suffix("/", AbsPath),
+    {IsDir, State}.
 
 list_dir(AbsPath, State=#state{root=Prefix}) ->
     io:format("List dir ~p~n", [AbsPath]),
