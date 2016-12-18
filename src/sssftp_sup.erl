@@ -14,7 +14,9 @@ init([]) ->
                               {system_dir, "/etc/ssh"},
                               {key_cb, sssftp_server_key},
                               {connectfun, fun sssftp_s3_api:connectfun/3},
-                              {subsystems, [ssh_sftpd:subsystem_spec([{file_handler, {sssftp_s3_api, [{aws_bucket, AWS_BUCKET}]}}])
+                              {subsystems, [ssh_sftpd:subsystem_spec([
+                                    {file_handler, {sssftp_s3_api, [{aws_bucket, AWS_BUCKET}]}},
+                                    {cwd, "/"}])
                                         ]}]]},
                 permanent,
                 5000,
