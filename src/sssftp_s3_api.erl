@@ -82,30 +82,27 @@ read(IoDevice, Len, State) ->
     {file:read(IoDevice, Len), State}.
 
 read_link(Path, State) ->
-    {file:read_link(Path), State}.
+    {{error, einval}, State}.
 
 read_link_info([], State) ->
     {{error, enoent}, State};
-read_link_info(Path, State=#state{ls_info=Info, root=Prefix}) ->
-    FullPath = Prefix ++ string:sub_string(Path, 2),
-    io:format("Path: ~p~n", [FullPath]),
-    Data = find_content_from_key(FullPath, Info),
-    io:format("Info ~p~n", [Data]),
-    FileInfo = get_file_info_from_content(Data),
-    {{ok, FileInfo}, State}.
+read_link_info(Path, State) ->
+    read_info(Path, State).
 
 get_file_info_from_content([]) ->
-    #file_info{type=directory};
+    #file_info{type=directory,
+               access=read_write};
 get_file_info_from_content([H|_]) ->
     IsDir = lists:suffix("/", proplists:get_value(key, H)),
-    FileType = file_type(IsDir),
-    #file_info{size=proplists:get_value(size, H),
-               type=FileType}.
+    Info0 = file_type(IsDir, #file_info{}),
+    Info0#file_info{size=proplists:get_value(size, H),
+               access=read_write}.
 
-file_type(true) ->
-    directory;
-file_type(false) ->
-    regular.
+file_type(true, Info) ->
+    Info#file_info{type=directory,
+                   mode=16877};
+file_type(false, Info) ->
+    Info#file_info{type=regular}.
 
 find_content_from_key(Value, Contents) ->
     lists:filter(fun(E) -> CValue = proplists:get_value(key, E),
@@ -114,7 +111,15 @@ find_content_from_key(Value, Contents) ->
                  Contents).
 
 read_file_info(Path, State) ->
-    {file:read_file_info(Path), State}.
+    read_info(Path, State).
+
+read_info(Path, State=#state{ls_info=Info, root=Prefix}) ->
+    FullPath = Prefix ++ string:sub_string(Path, 2),
+    io:format("Path: ~p~n", [FullPath]),
+    Data = find_content_from_key(FullPath, Info),
+    FileInfo = get_file_info_from_content(Data),
+    io:format("Info ~p~n", [{Data, FileInfo}]),
+    {{ok, FileInfo}, State}.
 
 rename(Path, Path2, State) ->
     {file:rename(Path, Path2), State}.
@@ -123,4 +128,4 @@ write(IoDevice, Data, State) ->
     {file:write(IoDevice, Data), State}.
 
 write_file_info(Path,Info, State) ->
-{file:write_file_info(Path, Info), State}.
+    {file:write_file_info(Path, Info), State}.
