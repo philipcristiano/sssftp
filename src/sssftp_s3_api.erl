@@ -103,9 +103,9 @@ get_file_info_from_content([H|_]) ->
                type=FileType}.
 
 file_type(true) ->
-    regular;
+    directory;
 file_type(false) ->
-    directory.
+    regular.
 
 find_content_from_key(Value, Contents) ->
     lists:filter(fun(E) -> CValue = proplists:get_value(key, E),
