@@ -42,15 +42,18 @@ get_cwd(State) ->
 is_dir(AbsPath, State=#state{root=Root}) ->
     io:format("is_dir ~pn", [AbsPath]),
     AWS_BUCKET = State#state.aws_bucket,
-    Prefix = Root ++ AbsPath,
+
+    % Make sure our dirs end in /
+    CleanAbsPath = strip_trailing_slash(AbsPath) ++ "/",
+    Prefix = Root ++ CleanAbsPath,
     Options = [{prefix, Prefix}],
     io:format("S3 Options ~p~n", [Options]),
     Result = erlcloud_s3:list_objects(AWS_BUCKET, Options),
     Contents = proplists:get_value(contents, Result),
     Files = [proplists:get_value(key, X) || X <- Contents],
     StrippedFiles = strip_path(Prefix, Files),
-    IsDir = lists:suffix("/", AbsPath),
-    io:format("IsDir ~p~n", [{AbsPath, IsDir}]),
+    IsDir = lists:suffix("/", CleanAbsPath),
+    io:format("IsDir ~p~n", [{CleanAbsPath, IsDir}]),
     {true, State#state{ls_info=Contents, filenames=StrippedFiles}}.
 
 list_dir(AbsPath, State=#state{filenames=StrippedFiles}) ->
@@ -59,7 +62,7 @@ list_dir(AbsPath, State=#state{filenames=StrippedFiles}) ->
     {{ok, StrippedFiles}, State}.
 
 strip_path(Prefix, Strings) when is_list(Prefix) ->
-    strip_path(Prefix, string:len(Prefix) + 2, Strings).
+    strip_path(Prefix, string:len(Prefix) + 1, Strings).
 
 strip_path(Prefix, Len, [Prefix|T]) when is_integer(Len) ->
     strip_path(Prefix, Len, T);
