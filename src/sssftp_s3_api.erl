@@ -33,17 +33,18 @@ get_cwd(State) ->
     AWS_BUCKET = proplists:get_value(aws_bucket, State),
     io:format("CWD ~p~n", [{State, self()}]),
     {ok, User} = sssftp_user_session:get(self()),
-    Prefix = "uploads/" ++ User,
+    Root = "uploads/" ++ User,
     io:format("User is: ~p~n", [User]),
     {file:get_cwd(), #state{aws_bucket=AWS_BUCKET,
-                            root=Prefix,
+                            root=Root,
                             user=User}}.
 
-is_dir(AbsPath, State=#state{root=Prefix}) ->
+is_dir(AbsPath, State=#state{root=Root}) ->
     io:format("is_dir ~pn", [AbsPath]),
     AWS_BUCKET = State#state.aws_bucket,
-    Options = [{prefix, Prefix ++ AbsPath}],
-    io:format("prefix ~p~n", [Options]),
+    Prefix = Root ++ AbsPath,
+    Options = [{prefix, Prefix}],
+    io:format("S3 Options ~p~n", [Options]),
     Result = erlcloud_s3:list_objects(AWS_BUCKET, Options),
     Contents = proplists:get_value(contents, Result),
     Files = [proplists:get_value(key, X) || X <- Contents],
