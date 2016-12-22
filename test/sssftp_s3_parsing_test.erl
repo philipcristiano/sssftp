@@ -18,6 +18,10 @@ filter_empty_test() ->
     ?assertEqual({[], []},
                  ?MUT:filter_s3_abs_path("uploads/user/", "/", [])).
 
-filter_root_test_doesnt_show_root() ->
+filter_root_doesnt_show_root_test() ->
     ?assertEqual({[], []},
                  ?MUT:filter_s3_abs_path("uploads/user/", "/", [make_s3("/")])).
+
+filter_single_file_test() ->
+    ?assertEqual({[], ["file.jpg"]},
+                 ?MUT:filter_s3_abs_path("uploads/user/", "/", [make_s3("uploads/user/file.jpg")])).

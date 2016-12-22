@@ -4,6 +4,8 @@
 
 -export([filter_s3_abs_path/3]).
 
+filter_s3_abs_path(S3Root, "/", Contents) ->
+    filter_s3_abs_path(S3Root, "", Contents);
 
 filter_s3_abs_path(S3Root, Path, Contents) ->
     lager:info("Filter for path2 ~p", [Path]),
