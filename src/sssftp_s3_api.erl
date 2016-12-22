@@ -1,6 +1,7 @@
 -module(sssftp_s3_api).
 
 -behaviour(ssh_sftpd_file_api).
+-compile([{parse_transform, lager_transform}]).
 
 -include_lib("kernel/include/file.hrl").
 %% API
@@ -78,6 +79,7 @@ filter_s3_abs_path(Path, State) ->
 filter_s3_abs_path_(Path, #state{ls_info=Contents,
                                          s3_root=S3Root}) ->
     io:format("Filter for path_ ~p~n", [Path]),
+    io:format("Contents ~p~n", [Contents]),
     AbsPath = filename:join([S3Root, Path]) ++ "/",
     io:format("Filter for path ~p~n", [AbsPath]),
     Files = [proplists:get_value(key, X) || X <- Contents],
@@ -145,21 +147,27 @@ strip_trailing_slash(String) ->
     string:strip(String, right, $/).
 
 make_dir(Dir, State) ->
+    io:format("mkdir~n"),
     {file:make_dir(Dir), State}.
 
 make_symlink(Path2, Path, State) ->
+    io:format("make_symlink~n"),
     {file:make_symlink(Path2, Path), State}.
 
 open(Path, Flags, State) ->
+    io:format("open~n"),
     {file:open(Path, Flags), State}.
 
 position(IoDevice, Offs, State) ->
+    io:format("position~n"),
     {file:position(IoDevice, Offs), State}.
 
 read(IoDevice, Len, State) ->
+    io:format("read~n"),
     {file:read(IoDevice, Len), State}.
 
 read_link(Path, State) ->
+    io:format("read link ~p~n", [Path]),
     {{error, einval}, State}.
 
 read_link_info([], State) ->
@@ -189,6 +197,7 @@ find_content_from_key(Value, Contents) ->
                  Contents).
 
 read_file_info(Path, State) ->
+    io:format("read file info ~p~n", [Path]),
     read_info(Path, State).
 
 read_info(Path, State=#state{ls_info=Info, s3_root=Prefix}) ->
@@ -200,10 +209,13 @@ read_info(Path, State=#state{ls_info=Info, s3_root=Prefix}) ->
     {{ok, FileInfo}, State}.
 
 rename(Path, Path2, State) ->
+    io:format("rename~n"),
     {file:rename(Path, Path2), State}.
 
 write(IoDevice, Data, State) ->
+    io:format("write~n"),
     {file:write(IoDevice, Data), State}.
 
 write_file_info(Path,Info, State) ->
+    io:format("write_file_info~n"),
     {file:write_file_info(Path, Info), State}.
