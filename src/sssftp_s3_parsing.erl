@@ -52,9 +52,11 @@ filtered_for_multipart(El) ->
 filter_s3_dirs(Paths) ->
     A =lists:foldl(fun(El, Acc) ->
                        Splits = filename:split(El),
-                       case length(Splits) of
-                           0 -> Acc;
-                           1 -> Acc;
+                       case {length(Splits), lists:last(El)}  of
+                           {0, _} -> Acc;
+                           {1, $/} -> io:format("1 match ~p~n", [Splits]),
+                                        sets:add_element(hd(Splits), Acc);
+                           {1, _ } -> Acc;
                            _ -> sets:add_element(hd(Splits), Acc)
                        end
                    end, sets:new(), Paths),
