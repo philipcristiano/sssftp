@@ -33,8 +33,6 @@ filter_root_single_dir_test() ->
 filter_root_for_non_root_file_test() ->
     ?assertEqual({["dir"], []},
                  ?MUT:filter_s3_abs_path("uploads/user/", "/", [make_s3("uploads/user/dir/file.jpg")])).
-
-
 filter_root_dir_and_file_test() ->
     Files = [make_s3("uploads/user/dir/"), make_s3("uploads/user/file.jpg")],
     ?assertEqual({["dir"], ["file.jpg"]},
@@ -43,4 +41,10 @@ filter_root_dir_and_file_test() ->
 filter_cd_for_non_root_dir_test() ->
     ?assertEqual({["nested_dir"], []},
                  ?MUT:filter_s3_abs_path("uploads/user/", "/dir", [make_s3("uploads/user/dir/nested_dir/")])).
+
+filter_cd_for_non_root_file_test() ->
+    ?assertEqual({["nested_dir"], ["second_file"]},
+                 ?MUT:filter_s3_abs_path("uploads/user/", "/dir",
+                [make_s3("uploads/user/dir/nested_dir/"),
+                 make_s3("uploads/user/dir/second_file")])).
 
