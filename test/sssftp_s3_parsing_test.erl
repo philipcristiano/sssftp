@@ -40,3 +40,7 @@ filter_root_dir_and_file_test() ->
     ?assertEqual({["dir"], ["file.jpg"]},
                  ?MUT:filter_s3_abs_path("uploads/user/", "/", Files)).
 
+filter_cd_for_non_root_dir_test() ->
+    ?assertEqual({["nested_dir"], []},
+                 ?MUT:filter_s3_abs_path("uploads/user/", "/dir", [make_s3("uploads/user/dir/nested_dir/")])).
+
