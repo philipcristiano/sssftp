@@ -48,3 +48,10 @@ filter_cd_for_non_root_file_test() ->
                 [make_s3("uploads/user/dir/nested_dir/"),
                  make_s3("uploads/user/dir/second_file")])).
 
+is_dir_root_test() ->
+    ?assertEqual(true,
+                 ?MUT:is_dir("uploads/user/", "/", [make_s3("uploads/user/")])).
+
+is_dir_child_dir_test() ->
+    ?assertEqual(false,
+                 ?MUT:is_dir("uploads/user/", "/foo", [make_s3("uploads/user/bar")])).

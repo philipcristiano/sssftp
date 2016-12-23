@@ -2,7 +2,7 @@
 
 -compile([{parse_transform, lager_transform}]).
 
--export([filter_s3_abs_path/3]).
+-export([filter_s3_abs_path/3, is_dir/3]).
 
 filter_s3_abs_path(S3Root, "/", Contents) ->
     filter_s3_abs_path(S3Root, "", Contents);
@@ -24,6 +24,27 @@ filter_s3_abs_path(S3Root, Path, Contents) ->
     FilteredFiles = filter_s3_files(StrippedObjs),
     FilteredDirs = filter_s3_dirs(StrippedObjs),
     {FilteredDirs, FilteredFiles}.
+
+is_dir(S3Root, Path, Contents) ->
+    io:format("Parser is_dir ~p~n", [Path]),
+    AbsPath = normalize_dir_path(S3Root, Path),
+    io:format("Parser is_dir Abspath ~p~n", [AbsPath]),
+    lists:any(fun(El) -> proplists:get_value(key, El) =:= AbsPath end, Contents).
+
+normalize_dir_path(S3Root, "/") ->
+    normalize_dir_path(S3Root, "");
+normalize_dir_path(S3Root, [$/|T]) ->
+    normalize_dir_path(S3Root, T);
+normalize_dir_path(S3Root, []) ->
+    normalize_dir_path(S3Root, [], []);
+normalize_dir_path(S3Root, Path) ->
+    normalize_dir_path(S3Root, Path, lists:last(Path)).
+
+normalize_dir_path(S3Root, Path, $/) ->
+    filename:join([S3Root, Path]);
+normalize_dir_path(S3Root, Path, _Last) ->
+    filename:join([S3Root, Path]) ++ "/".
+
 
 strip_path(Prefix, Strings) when is_list(Prefix) ->
     strip_path(Prefix, string:len(Prefix) + 1, Strings).

@@ -52,15 +52,8 @@ is_dir(AbsPath, State0) ->
     io:format("Got state~n"),
     S3Root = State1#state.s3_root,
     Contents = State1#state.ls_info,
-    io:format("Filter~n"),
-    {Dirs, _Files} = sssftp_s3_parsing:filter_s3_abs_path(S3Root, AbsPath, Contents),
-    io:format("isdir dirs ~p~n", [Dirs]),
-    % Make sure our dirs end in /
-    CleanAbsPath = strip_trailing_slash(AbsPath) ++ "/",
-    io:format("split dir ~p~n", [filename:split(CleanAbsPath)]),
-    IsDir = lists:suffix("/", CleanAbsPath),
-    io:format("IsDir ~p~n", [{CleanAbsPath, IsDir}]),
-    {true, State1}.
+    IsDir = sssftp_s3_parsing:is_dir(S3Root, AbsPath, Contents),
+    {IsDir, State1}.
 
 get_s3_path(Path, State=#state{aws_bucket=Bucket, s3_root=S3Root}) ->
     Prefix = S3Root ++ Path,
@@ -79,9 +72,6 @@ list_dir(AbsPath, State) ->
     LS = lists:append([Files, Dirs]),
     io:format("Files ~p~n", [LS]),
     {{ok, LS}, State}.
-
-strip_trailing_slash(String) ->
-    string:strip(String, right, $/).
 
 make_dir(Dir, State) ->
     io:format("mkdir~n"),
