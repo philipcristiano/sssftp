@@ -49,7 +49,12 @@ is_dir(AbsPath, State0) ->
     io:format("is_dir ~p~n", [AbsPath]),
     Dir = filename:dirname(AbsPath),
     {true, State1} = get_s3_path(Dir, State0),
-
+    io:format("Got state~n"),
+    S3Root = State1#state.s3_root,
+    Contents = State1#state.ls_info,
+    io:format("Filter~n"),
+    {Dirs, _Files} = sssftp_s3_parsing:filter_s3_abs_path(S3Root, AbsPath, Contents),
+    io:format("isdir dirs ~p~n", [Dirs]),
     % Make sure our dirs end in /
     CleanAbsPath = strip_trailing_slash(AbsPath) ++ "/",
     io:format("split dir ~p~n", [filename:split(CleanAbsPath)]),
@@ -66,82 +71,14 @@ get_s3_path(Path, State=#state{aws_bucket=Bucket, s3_root=S3Root}) ->
     {true, State#state{ls_info=Contents,
                        path=Path}}.
 
-filter_s3_abs_path("/", State) ->
-    io:format("filter s3 abs path 1 ~n"),
-    filter_s3_abs_path_("", State);
-filter_s3_abs_path([$/|Path], State) ->
-    io:format("filter s3 abs path 1.5 ~n"),
-    filter_s3_abs_path_(Path, State);
-filter_s3_abs_path(Path, State) ->
-    io:format("filter s3 abs path 2 ~p~n", [Path]),
-    filter_s3_abs_path_(Path, State).
-
-filter_s3_abs_path_(Path, #state{ls_info=Contents,
-                                         s3_root=S3Root}) ->
-    io:format("Filter for path_ ~p~n", [Path]),
-    io:format("Contents ~p~n", [Contents]),
-    AbsPath = filename:join([S3Root, Path]) ++ "/",
-    io:format("Filter for path ~p~n", [AbsPath]),
-    Files = [proplists:get_value(key, X) || X <- Contents],
-    APL = length(AbsPath),
-    LFiles = lists:filter(fun(El) -> length(El) >= APL end, Files),
-
-    StrippedObjs = strip_path(AbsPath, LFiles),
-    io:format("Stripped objs ~p~n", [StrippedObjs]),
-    FilteredFiles = filter_s3_files(StrippedObjs),
-    FilteredDirs = filter_s3_dirs(StrippedObjs),
-    {FilteredDirs, FilteredFiles}.
-
-
-% is_s3_dir(Path) ->
-%     SplitPath = filename:split(Path),
-%     lists:last(SplitPath) =:= "/".
-%
-
-filter_s3_files(Paths) ->
-    lists:filtermap(fun(El) ->
-                io:format("Filtering ~p~n", [El]),
-                case lists:last(El) of
-                    $/ -> false;
-                    _  -> filtered_for_multipart(El)
-                end
-              end, Paths).
-
-filtered_for_multipart(El) ->
-    Splits = filename:split(El),
-    case length(Splits) of
-        1 -> {true, El};
-        _ -> false
-    end.
-
-filter_s3_dirs(Paths) ->
-    A =lists:foldl(fun(El, Acc) ->
-                       Splits = filename:split(El),
-                       case length(Splits) of
-                           0 -> Acc;
-                           1 -> Acc;
-                           _ -> sets:add_element(hd(Splits), Acc)
-                       end
-                   end, sets:new(), Paths),
-    sets:to_list(A).
-
 list_dir(AbsPath, State) ->
-    io:format("List dir ~p~n", [AbsPath]),
-    {Dirs, Files} = filter_s3_abs_path(AbsPath, State),
+    io:format("List dir ~p~n", [{AbsPath, State}]),
+    S3Root = State#state.s3_root,
+    Contents = State#state.ls_info,
+    {Dirs, Files} = sssftp_s3_parsing:filter_s3_abs_path(S3Root, AbsPath, Contents),
     LS = lists:append([Files, Dirs]),
     io:format("Files ~p~n", [LS]),
     {{ok, LS}, State}.
-
-strip_path(Prefix, Strings) when is_list(Prefix) ->
-    strip_path(Prefix, string:len(Prefix) + 1, Strings).
-
-strip_path(Prefix, Len, [Prefix|T]) when is_integer(Len) ->
-    strip_path(Prefix, Len, T);
-strip_path(Prefix, Len, [H|T]) when is_integer(Len) ->
-    io:format("strip ~p ~p~n", [Prefix, H]),
-    [string:sub_string(H, Len) | strip_path(Prefix, Len, T)];
-strip_path(_Prefix, _Len, []) ->
-    [].
 
 strip_trailing_slash(String) ->
     string:strip(String, right, $/).
