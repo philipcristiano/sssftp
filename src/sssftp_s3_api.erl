@@ -16,16 +16,20 @@
                 dirs=undefined,
                 ls_info=undefined,
                 filenames=undefined,
+                file_position=0,
                 path=undefined,
                 s3_root=undefined,
                 user=undefined}).
 
+-record(reading_file, {bin=undefined,
+                       length=undefined}).
+
 connectfun(User, _IP, _Method) ->
     io:format("User connected ~p~n", [{User, self()}]).
 
-close(IoDevice, State) ->
+close(_IoDevice, State) ->
     io:format("close~n"),
-    {file:close(IoDevice), State}.
+    {ok, State}.
 
 delete(Path, State) ->
     io:format("delete~n"),
@@ -81,17 +85,36 @@ make_symlink(Path2, Path, State) ->
     io:format("make_symlink~n"),
     {file:make_symlink(Path2, Path), State}.
 
-open(Path, Flags, State) ->
-    io:format("open~n"),
-    {file:open(Path, Flags), State}.
+open(Path, _Flags, State=#state{aws_bucket=Bucket, s3_root=S3Root}) ->
+    AbsPath = S3Root ++ Path,
+    io:format("Path: ~p ~p ~p~n", [S3Root, Path, AbsPath]),
+    Obj = erlcloud_s3:get_object(Bucket, AbsPath),
+    io:format("Path 1"),
+    Length = proplists:get_value(content_length, Obj),
+    io:format("Path 2"),
+    Content = proplists:get_value(content, Obj),
+    io:format("Path 3"),
+    {ILength, _} = string:to_integer(Length),
+    io:format("Length ~p~n", [ILength]),
+    RF = #reading_file{bin=Content, length=ILength},
+    io:format("open ~n"),
+    {{ok, RF}, State#state{file_position=0}}.
 
-position(IoDevice, Offs, State) ->
-    io:format("position~n"),
-    {file:position(IoDevice, Offs), State}.
+position(IoDevice, {bof, Pos}, State) ->
+    io:format("position ~p~n", [Pos]),
+    {{ok, IoDevice}, State#state{file_position=Pos}}.
 
-read(IoDevice, Len, State) ->
-    io:format("read~n"),
-    {file:read(IoDevice, Len), State}.
+read(#reading_file{length=TotalLength}, _Len, State=#state{file_position=TotalLength}) ->
+    {eof, State};
+read(#reading_file{bin=Bin, length=TotalLength}, Len, State=#state{file_position=Pos}) ->
+    io:format("read ~p~n",[{Pos, Len, TotalLength, Pos+Len}]),
+    Data = case Pos+Len > TotalLength of
+        false -> <<_:Pos/binary, D:Len/binary, _/binary>> = Bin,
+                 D;
+        true -> <<_:Pos/binary, D/binary>> = Bin,
+                D
+    end,
+    {{ok, Data}, State}.
 
 read_link(Path, State) ->
     io:format("read link ~p~n", [Path]),
