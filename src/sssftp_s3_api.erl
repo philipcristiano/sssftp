@@ -85,17 +85,12 @@ make_symlink(Path2, Path, State) ->
     io:format("make_symlink~n"),
     {file:make_symlink(Path2, Path), State}.
 
-open(Path, _Flags, State=#state{aws_bucket=Bucket, s3_root=S3Root}) ->
+open(Path, [binary, read], State=#state{aws_bucket=Bucket, s3_root=S3Root}) ->
     AbsPath = S3Root ++ Path,
-    io:format("Path: ~p ~p ~p~n", [S3Root, Path, AbsPath]),
     Obj = erlcloud_s3:get_object(Bucket, AbsPath),
-    io:format("Path 1"),
     Length = proplists:get_value(content_length, Obj),
-    io:format("Path 2"),
     Content = proplists:get_value(content, Obj),
-    io:format("Path 3"),
     {ILength, _} = string:to_integer(Length),
-    io:format("Length ~p~n", [ILength]),
     RF = #reading_file{bin=Content, length=ILength},
     io:format("open ~n"),
     {{ok, RF}, State#state{file_position=0}}.
@@ -132,7 +127,7 @@ get_file_info_from_content([H|_]) ->
     IsDir = lists:suffix("/", proplists:get_value(key, H)),
     Info0 = file_type(IsDir, #file_info{}),
     Info0#file_info{size=proplists:get_value(size, H),
-               access=read_write}.
+                    access=read_write}.
 
 file_type(true, Info) ->
     Info#file_info{type=directory,
