@@ -17,6 +17,7 @@
                 ls_info=undefined,
                 filenames=undefined,
                 file_position=0,
+                uploading_bin=undefined,
                 path=undefined,
                 s3_root=undefined,
                 user=undefined}).
@@ -26,6 +27,16 @@
 
 connectfun(User, _IP, _Method) ->
     io:format("User connected ~p~n", [{User, self()}]).
+
+close({writing_file, Path}, State=#state{s3_root=S3Root,
+                                         aws_bucket=Bucket,
+                                         uploading_bin=Bin}) ->
+
+    FilePath = S3Root ++ Path,
+
+    io:format("close ~p~n", [FilePath]),
+    erlcloud_s3:put_object(Bucket, FilePath, Bin),
+    {ok, State};
 
 close(_IoDevice, State) ->
     io:format("close~n"),
@@ -84,6 +95,9 @@ make_dir(Dir, State) ->
 make_symlink(Path2, Path, State) ->
     io:format("make_symlink~n"),
     {file:make_symlink(Path2, Path), State}.
+
+open(Path, [binary, write], State) ->
+    {{ok, {writing_file, Path}}, State#state{uploading_bin= <<"">>}};
 
 open(Path, [binary, read], State=#state{aws_bucket=Bucket, s3_root=S3Root}) ->
     AbsPath = S3Root ++ Path,
@@ -157,9 +171,10 @@ rename(Path, Path2, State) ->
     io:format("rename~n"),
     {file:rename(Path, Path2), State}.
 
-write(IoDevice, Data, State) ->
+write({writing_file, _Path}, Data, State=#state{uploading_bin=Bin}) ->
     io:format("write~n"),
-    {file:write(IoDevice, Data), State}.
+    PartialBin = <<Bin/binary, Data/binary>>,
+    {ok, State#state{uploading_bin=PartialBin}}.
 
 write_file_info(Path,Info, State) ->
     io:format("write_file_info~n"),
