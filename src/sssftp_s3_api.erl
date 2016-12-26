@@ -88,9 +88,11 @@ list_dir(AbsPath, State) ->
     io:format("Files ~p~n", [LS]),
     {{ok, LS}, State}.
 
-make_dir(Dir, State) ->
-    io:format("mkdir~n"),
-    {file:make_dir(Dir), State}.
+make_dir(Dir, State=#state{s3_root=S3Root, aws_bucket=Bucket}) ->
+    FilePath = S3Root ++ Dir ++ "/",
+    io:format("mkdir ~p~n", [{Bucket, FilePath}]),
+    erlcloud_s3:put_object(Bucket, FilePath, <<"">>),
+    {ok, State}.
 
 make_symlink(Path2, Path, State) ->
     io:format("make_symlink~n"),
