@@ -42,9 +42,24 @@ close(_IoDevice, State) ->
     io:format("close~n"),
     {ok, State}.
 
-delete(Path, State) ->
-    io:format("delete~n"),
-    {file:delete(Path), State}.
+delete(Path, State=#state{aws_bucket=Bucket,
+                          s3_root=S3Root,
+                          ls_info=Contents}) ->
+    AbsPath = S3Root ++ Path,
+    DirName = filename:dirname(Path),
+    FileName = filename:basename(Path),
+    io:format("delete ~p ~p~n", [Path, AbsPath]),
+    {_Dirs, Files} = sssftp_s3_parsing:filter_s3_abs_path(S3Root, DirName, Contents),
+    io:format("Found files ~p~n", [Files]),
+    FileExists = lists:member(FileName, Files),
+    Result = case FileExists of
+        true -> io:format("deleting file~n"),
+                erlcloud_s3:delete_object(Bucket, AbsPath),
+                ok;
+        false -> {error, enoent}
+    end,
+    {Result, State}.
+
 
 del_dir(Path, State=#state{aws_bucket=Bucket,
                            s3_root=S3Root,
