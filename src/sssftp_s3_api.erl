@@ -64,7 +64,6 @@ is_dir(AbsPath, State0) ->
     io:format("is_dir ~p~n", [AbsPath]),
     Dir = filename:dirname(AbsPath),
     {true, State1} = get_s3_path(Dir, State0),
-    io:format("Got state~n"),
     S3Root = State1#state.s3_root,
     Contents = State1#state.ls_info,
     IsDir = sssftp_s3_parsing:is_dir(S3Root, AbsPath, Contents),
@@ -85,7 +84,6 @@ list_dir(AbsPath, State) ->
     Contents = State#state.ls_info,
     {Dirs, Files} = sssftp_s3_parsing:filter_s3_abs_path(S3Root, AbsPath, Contents),
     LS = lists:append([Files, Dirs]),
-    io:format("Files ~p~n", [LS]),
     {{ok, LS}, State}.
 
 make_dir(Dir, State=#state{s3_root=S3Root, aws_bucket=Bucket}) ->
