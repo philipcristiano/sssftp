@@ -81,15 +81,18 @@ del_dir(Path, State=#state{aws_bucket=Bucket,
 could_delete([], []) -> true;
 could_delete(_, _) -> false.
 
-get_cwd(State) ->
-    AWS_BUCKET = proplists:get_value(aws_bucket, State),
-    io:format("CWD ~p~n", [{State, self()}]),
+get_cwd(State0) ->
+    AWS_BUCKET = proplists:get_value(aws_bucket, State0),
+    io:format("CWD ~p~n", [{State0, self()}]),
     {ok, User} = sssftp_user_session:get(self()),
     Root = "uploads/" ++ User,
     io:format("User is: ~p~n", [User]),
-    {file:get_cwd(), #state{aws_bucket=AWS_BUCKET,
-                            s3_root=Root,
-                            user=User}}.
+    State1 = #state{aws_bucket=AWS_BUCKET,
+                    s3_root=Root,
+                    user=User},
+    Dir = AWS_BUCKET ++ Root ++ "/",
+    {true, State2} = get_s3_path(Dir, State1),
+    {file:get_cwd(), State2 }.
 
 is_dir(AbsPath, State0) ->
     io:format("is_dir ~p~n", [AbsPath]),
