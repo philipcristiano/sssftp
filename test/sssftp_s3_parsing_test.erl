@@ -52,6 +52,7 @@ filter_when_other_dirs_test() ->
     ?assertEqual({[], ["foo_a"]},
                  ?MUT:filter_s3_abs_path("uploads/user/", "dir_a",
                 [make_s3("uploads/user/dir/nested_dir/"),
+                 make_s3("uploads/user/dir/"),
                  make_s3("uploads/user/dir_a/foo_a"),
                  make_s3("uploads/user/dir_b/foo_b"),
                  make_s3("uploads/user/dir_is_longer/")])).
