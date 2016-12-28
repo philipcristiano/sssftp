@@ -15,7 +15,10 @@ filter_s3_abs_path(S3Root, Path, Contents) ->
     io:format("Filter for path ~p ~p~n", [Path, AbsPath]),
     Files = [proplists:get_value(key, X) || X <- Contents],
     APL = length(AbsPath),
-    LFiles = lists:filter(fun(El) -> length(El) >= APL end, Files),
+    LFiles = lists:filter(fun(El) ->
+                            SubStr = string:sub_string(El, 1, APL),
+                            SubStr =:= AbsPath
+                          end, Files),
 
     StrippedObjs = strip_path(AbsPath, LFiles),
     io:format("Stripped objs ~p~n", [StrippedObjs]),
