@@ -46,9 +46,25 @@ delete(Path, State) ->
     io:format("delete~n"),
     {file:delete(Path), State}.
 
-del_dir(Path, State) ->
-    io:format("del_dir~n"),
-    {file:del_dir(Path), State}.
+del_dir(Path, State=#state{aws_bucket=Bucket,
+                           s3_root=S3Root,
+                           ls_info=Contents}) ->
+    AbsPath = S3Root ++ Path ++ "/",
+    io:format("del_dir ~p ~p~n", [Path, AbsPath]),
+    {Dirs, Files} = sssftp_s3_parsing:filter_s3_abs_path(S3Root, Path, Contents),
+    io:format("Contents ~p, ~p~n", [Dirs, Files]),
+    Result = case could_delete(Dirs, Files) of
+        true -> io:format("Could delete~n"),
+                erlcloud_s3:delete_object(Bucket, AbsPath),
+                ok;
+        false -> io:format("Cant delete"),
+                 {error, eexist}
+    end,
+
+    {Result, State}.
+
+could_delete([], []) -> true;
+could_delete(_, _) -> false.
 
 get_cwd(State) ->
     AWS_BUCKET = proplists:get_value(aws_bucket, State),
