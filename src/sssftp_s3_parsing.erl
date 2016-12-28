@@ -11,10 +11,8 @@ filter_s3_abs_path(S3Root, [$/|T], Contents) ->
     filter_s3_abs_path(S3Root, T, Contents);
 
 filter_s3_abs_path(S3Root, Path, Contents) ->
-    lager:info("Filter for path2 ~p", [Path]),
-    io:format("Filter for path_ ~p~n", [Path]),
     AbsPath = filename:join([S3Root, Path]) ++ "/",
-    io:format("Filter for path ~p~n", [AbsPath]),
+    io:format("Filter for path ~p ~p~n", [Path, AbsPath]),
     Files = [proplists:get_value(key, X) || X <- Contents],
     APL = length(AbsPath),
     LFiles = lists:filter(fun(El) -> length(El) >= APL end, Files),
