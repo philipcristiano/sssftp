@@ -26,7 +26,7 @@
                        length=undefined}).
 
 connectfun(User, _IP, _Method) ->
-    io:format("User connected ~p~n", [{User, self()}]).
+    lager:info("User connected ~p", [{User, self()}]).
 
 close({writing_file, Path}, State=#state{s3_root=S3Root,
                                          aws_bucket=Bucket,
@@ -34,12 +34,12 @@ close({writing_file, Path}, State=#state{s3_root=S3Root,
 
     FilePath = S3Root ++ Path,
 
-    io:format("close ~p~n", [FilePath]),
+    lager:debug("Closing file for writing ~p", [FilePath]),
     erlcloud_s3:put_object(Bucket, FilePath, Bin),
     {ok, State};
 
 close(_IoDevice, State) ->
-    io:format("close~n"),
+    lager:debug("Closing file for reading"),
     {ok, State}.
 
 delete(Path, State=#state{aws_bucket=Bucket,
@@ -48,12 +48,12 @@ delete(Path, State=#state{aws_bucket=Bucket,
     AbsPath = S3Root ++ Path,
     DirName = filename:dirname(Path),
     FileName = filename:basename(Path),
-    io:format("delete ~p ~p~n", [Path, AbsPath]),
+    lager:debug("Deleting file ~p ~p", [Path, AbsPath]),
     {_Dirs, Files} = sssftp_s3_parsing:filter_s3_abs_path(S3Root, DirName, Contents),
-    io:format("Found files ~p~n", [Files]),
+    lager:debug("Found files ~p", [Files]),
     FileExists = lists:member(FileName, Files),
     Result = case FileExists of
-        true -> io:format("deleting file~n"),
+        true -> lager:debug("Actually deleting file~n"),
                 erlcloud_s3:delete_object(Bucket, AbsPath),
                 ok;
         false -> {error, enoent}
@@ -65,14 +65,14 @@ del_dir(Path, State=#state{aws_bucket=Bucket,
                            s3_root=S3Root,
                            ls_info=Contents}) ->
     AbsPath = S3Root ++ Path ++ "/",
-    io:format("del_dir ~p ~p~n", [Path, AbsPath]),
+    lager:debug("Deleting directory ~p ~p", [Path, AbsPath]),
     {Dirs, Files} = sssftp_s3_parsing:filter_s3_abs_path(S3Root, Path, Contents),
-    io:format("Contents ~p, ~p~n", [Dirs, Files]),
+    lager:debug("Dir Contains ~p, ~p~n", [Dirs, Files]),
     Result = case could_delete(Dirs, Files) of
-        true -> io:format("Could delete~n"),
+        true -> lager:debug("Can delete dir."),
                 erlcloud_s3:delete_object(Bucket, AbsPath),
                 ok;
-        false -> io:format("Cant delete"),
+        false -> lager:debug("Cant delete dir, it still has contents."),
                  {error, eexist}
     end,
 
