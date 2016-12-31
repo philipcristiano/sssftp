@@ -113,7 +113,7 @@ get_s3_path(Path, State=#state{aws_bucket=Bucket, s3_root=S3Root}) ->
                        path=Path}}.
 
 list_dir(AbsPath, State) ->
-    lager:debug("List dir ~p", [{AbsPath, State}]),
+    lager:debug("List dir ~p", [AbsPath}]),
     S3Root = State#state.s3_root,
     Contents = State#state.ls_info,
     {Dirs, Files} = sssftp_s3_parsing:filter_s3_abs_path(S3Root, AbsPath, Contents),
