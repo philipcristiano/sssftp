@@ -26,7 +26,7 @@
          get/1,
          get/2]).
 
--record(state, {user=undefined}).
+-record(state, {client_pid, user=undefined}).
 
 %%%===================================================================
 %%% API functions
@@ -67,6 +67,7 @@ start_link() ->
 %% @end
 %%--------------------------------------------------------------------
 init([]) ->
+    process_flag(trap_exit, true),
     {ok, #state{}}.
 
 %%--------------------------------------------------------------------
@@ -83,18 +84,23 @@ init([]) ->
 %%                                   {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_call({add, _SessPid, Username}, _From, #state{user=undefined}) ->
-    {reply, ok, #state{user=Username}};
+handle_call({add, SessPid, Username}, _From, #state{user=undefined}) ->
+    true = link(SessPid),
+    {reply, ok, #state{client_pid=SessPid, user=Username}};
 handle_call({add, _SessPid, Username}, _From, #state{user=Username}) ->
     {reply, ok, #state{user=Username}};
 handle_call({add, _SessPid, Username}, _From, #state{user=_IncorrectUser}) ->
     {reply, error, #state{user=Username}};
 
-handle_call({get, SessPid}, _From, #state{user=User}) ->
+handle_call({get, SessPid}, _From, #state{client_pid=undefined, user=User}) ->
     io:format("Getting ~p~n", [SessPid]),
     Reply = get_resp(User),
     io:format("Reply ~p,~p~n", [User,Reply]),
     {reply, Reply, #state{user=undefined}};
+handle_call({get, SessPid}, _From, #state{client_pid=OrigSess, user=User}) ->
+    unlink(OrigSess),
+    Reply = get_resp(User),
+    {reply, Reply, #state{client_pid=undefined, user=undefined}};
 
 handle_call(_Request, _From, State) ->
     Reply = ok,
@@ -102,7 +108,7 @@ handle_call(_Request, _From, State) ->
 
 
 get_resp(undefined) ->
-    error;
+    {error, undefined};
 get_resp(Resp) ->
     {ok, Resp}.
 
@@ -129,7 +135,10 @@ handle_cast(_Msg, State) ->
 %%                                   {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_info(_Info, State) ->
+handle_info({'EXIT', Pid, _Reason}, State=#state{client_pid=Pid}) ->
+    {noreply, State#state{client_pid=undefined, user=undefined}};
+handle_info(Info, State) ->
+    io:format("Unhandled info ~p~n", [{Info, State}]),
     {noreply, State}.
 
 %%--------------------------------------------------------------------
