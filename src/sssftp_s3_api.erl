@@ -26,7 +26,7 @@
                        length=undefined}).
 
 connectfun(User, _IP, _Method) ->
-    lager:info("User connected ~p", [{User, self()}]).
+    ok = lager:info("User connected ~p", [{User, self()}]).
 
 close({writing_file, Path}, State=#state{s3_root=S3Root,
                                          aws_bucket=Bucket,
@@ -34,12 +34,12 @@ close({writing_file, Path}, State=#state{s3_root=S3Root,
 
     FilePath = S3Root ++ Path,
 
-    lager:debug("Closing file for writing ~p", [FilePath]),
+    ok = lager:debug("Closing file for writing ~p", [FilePath]),
     erlcloud_s3:put_object(Bucket, FilePath, Bin),
     {ok, State};
 
 close(_IoDevice, State) ->
-    lager:debug("Closing file for reading"),
+    ok = lager:debug("Closing file for reading"),
     {ok, State}.
 
 delete(Path, State=#state{aws_bucket=Bucket,
@@ -48,12 +48,12 @@ delete(Path, State=#state{aws_bucket=Bucket,
     AbsPath = S3Root ++ Path,
     DirName = filename:dirname(Path),
     FileName = filename:basename(Path),
-    lager:debug("Deleting file ~p ~p", [Path, AbsPath]),
+    ok = lager:debug("Deleting file ~p ~p", [Path, AbsPath]),
     {_Dirs, Files} = sssftp_s3_parsing:filter_s3_abs_path(S3Root, DirName, Contents),
-    lager:debug("Found files ~p", [Files]),
+    ok = lager:debug("Found files ~p", [Files]),
     FileExists = lists:member(FileName, Files),
     Result = case FileExists of
-        true -> lager:debug("Actually deleting file"),
+        true -> ok = lager:debug("Actually deleting file"),
                 erlcloud_s3:delete_object(Bucket, AbsPath),
                 ok;
         false -> {error, enoent}
@@ -65,14 +65,14 @@ del_dir(Path, State=#state{aws_bucket=Bucket,
                            s3_root=S3Root,
                            ls_info=Contents}) ->
     AbsPath = S3Root ++ Path ++ "/",
-    lager:debug("Deleting directory ~p ~p", [Path, AbsPath]),
+    ok = lager:debug("Deleting directory ~p ~p", [Path, AbsPath]),
     {Dirs, Files} = sssftp_s3_parsing:filter_s3_abs_path(S3Root, Path, Contents),
-    lager:debug("Dir Contains ~p, ~p", [Dirs, Files]),
+    ok = lager:debug("Dir Contains ~p, ~p", [Dirs, Files]),
     Result = case could_delete(Dirs, Files) of
-        true -> lager:debug("Can delete dir."),
+        true -> ok = lager:debug("Can delete dir."),
                 erlcloud_s3:delete_object(Bucket, AbsPath),
                 ok;
-        false -> lager:debug("Cant delete dir, it still has contents."),
+        false -> ok = lager:debug("Cant delete dir, it still has contents."),
                  {error, eexist}
     end,
 
@@ -83,10 +83,10 @@ could_delete(_, _) -> false.
 
 get_cwd(State0) ->
     AWS_BUCKET = proplists:get_value(aws_bucket, State0),
-    lager:debug("CWD ~p", [{State0, self()}]),
+    ok = lager:debug("CWD ~p", [{State0, self()}]),
     {ok, User} = sssftp_user_session:get(self()),
     Root = "uploads/" ++ User,
-    lager:debug("User is: ~p", [User]),
+    ok = lager:debug("User is: ~p", [User]),
     State1 = #state{aws_bucket=AWS_BUCKET,
                     s3_root=Root,
                     user=User},
@@ -95,7 +95,7 @@ get_cwd(State0) ->
     {file:get_cwd(), State2 }.
 
 is_dir(AbsPath, State0) ->
-    lager:debug("is_dir ~p", [AbsPath]),
+    ok = lager:debug("is_dir ~p", [AbsPath]),
     Dir = filename:dirname(AbsPath),
     {true, State1} = get_s3_path(Dir, State0),
     S3Root = State1#state.s3_root,
@@ -106,14 +106,14 @@ is_dir(AbsPath, State0) ->
 get_s3_path(Path, State=#state{aws_bucket=Bucket, s3_root=S3Root}) ->
     Prefix = S3Root ++ Path,
     Options = [{prefix, Prefix}],
-    lager:debug("S3 Options ~p", [Options]),
+    ok = lager:debug("S3 Options ~p", [Options]),
     Result = erlcloud_s3:list_objects(Bucket, Options),
     Contents = proplists:get_value(contents, Result),
     {true, State#state{ls_info=Contents,
                        path=Path}}.
 
 list_dir(AbsPath, State) ->
-    lager:debug("List dir ~p", [AbsPath]),
+    ok = lager:debug("List dir ~p", [AbsPath]),
     S3Root = State#state.s3_root,
     Contents = State#state.ls_info,
     {Dirs, Files} = sssftp_s3_parsing:filter_s3_abs_path(S3Root, AbsPath, Contents),
@@ -122,12 +122,12 @@ list_dir(AbsPath, State) ->
 
 make_dir(Dir, State=#state{s3_root=S3Root, aws_bucket=Bucket}) ->
     FilePath = S3Root ++ Dir ++ "/",
-    lager:debug("mkdir ~p", [{Bucket, FilePath}]),
+    ok = lager:debug("mkdir ~p", [{Bucket, FilePath}]),
     erlcloud_s3:put_object(Bucket, FilePath, <<"">>),
     {ok, State}.
 
 make_symlink(Path2, Path, State) ->
-    lager:debug("make_symlink"),
+    ok = lager:debug("make_symlink"),
     {file:make_symlink(Path2, Path), State}.
 
 open(Path, [binary, write], State) ->
@@ -140,17 +140,17 @@ open(Path, [binary, read], State=#state{aws_bucket=Bucket, s3_root=S3Root}) ->
     Content = proplists:get_value(content, Obj),
     {ILength, _} = string:to_integer(Length),
     RF = #reading_file{bin=Content, length=ILength},
-    lager:debug("open "),
+    ok = lager:debug("open "),
     {{ok, RF}, State#state{file_position=0}}.
 
 position(IoDevice, {bof, Pos}, State) ->
-    lager:debug("position ~p", [Pos]),
+    ok = lager:debug("position ~p", [Pos]),
     {{ok, IoDevice}, State#state{file_position=Pos}}.
 
 read(#reading_file{length=TotalLength}, _Len, State=#state{file_position=TotalLength}) ->
     {eof, State};
 read(#reading_file{bin=Bin, length=TotalLength}, Len, State=#state{file_position=Pos}) ->
-    lager:debug("read ~p",[{Pos, Len, TotalLength, Pos+Len}]),
+    ok = lager:debug("read ~p",[{Pos, Len, TotalLength, Pos+Len}]),
     Data = case Pos+Len > TotalLength of
         false -> <<_:Pos/binary, D:Len/binary, _/binary>> = Bin,
                  D;
@@ -160,7 +160,7 @@ read(#reading_file{bin=Bin, length=TotalLength}, Len, State=#state{file_position
     {{ok, Data}, State}.
 
 read_link(Path, State) ->
-    lager:debug("read link ~p", [Path]),
+    ok = lager:debug("read link ~p", [Path]),
     {{error, einval}, State}.
 
 read_link_info([], State) ->
@@ -190,26 +190,26 @@ find_content_from_key(Value, Contents) ->
                  Contents).
 
 read_file_info(Path, State) ->
-    lager:debug("read file info ~p", [Path]),
+    ok = lager:debug("read file info ~p", [Path]),
     read_info(Path, State).
 
 read_info(Path, State=#state{ls_info=Info, s3_root=Prefix}) ->
     FullPath = Prefix ++ string:sub_string(Path, 1),
-    lager:debug("Path: ~p", [FullPath]),
+    ok = lager:debug("Path: ~p", [FullPath]),
     Data = find_content_from_key(FullPath, Info),
     FileInfo = get_file_info_from_content(Data),
-    lager:debug("Info ~p", [{Data, FileInfo}]),
+    ok = lager:debug("Info ~p", [{Data, FileInfo}]),
     {{ok, FileInfo}, State}.
 
 rename(Path, Path2, State) ->
-    lager:debug("rename"),
+    ok = lager:debug("rename"),
     {file:rename(Path, Path2), State}.
 
 write({writing_file, _Path}, Data, State=#state{uploading_bin=Bin}) ->
-    lager:debug("write"),
+    ok = lager:debug("write"),
     PartialBin = <<Bin/binary, Data/binary>>,
     {ok, State#state{uploading_bin=PartialBin}}.
 
 write_file_info(Path,Info, State) ->
-    lager:debug("write_file_info"),
+    ok = lager:debug("write_file_info"),
     {file:write_file_info(Path, Info), State}.
