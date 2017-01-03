@@ -3,7 +3,7 @@ PROJECT_DESCRIPTION = New project
 PROJECT_VERSION = 0.1.0
 
 SHELL_DEPS = sync
-LOCAL_DEPS = sasl ssh
+LOCAL_DEPS = ssh
 DEPS = lager erlcloud
 EUNIT_OPTS = verbose
 EUNIT_ERL_OPTS = -config sssftpd.config -s lager

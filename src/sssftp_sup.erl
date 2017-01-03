@@ -1,5 +1,6 @@
 -module(sssftp_sup).
 -behaviour(supervisor).
+-compile([{parse_transform, lager_transform}]).
 
 -export([start_link/0]).
 -export([init/1]).
@@ -8,9 +9,11 @@ start_link() ->
 	supervisor:start_link({local, ?MODULE}, ?MODULE, []).
 
 init([]) ->
+    {Port, _} = string:to_integer(os:getenv("PORT", "8989")),
     AWS_BUCKET = os:getenv("AWS_BUCKET"),
+    lager:info("Starting on port ~p", [Port]),
 	Procs = [{server,
-               {ssh, daemon, [8989, [{system_dir, "/tmp/"},
+               {ssh, daemon, [Port, [{system_dir, "/tmp/"},
                               {system_dir, "/etc/ssh"},
                               {key_cb, sssftp_server_key},
                               {connectfun, fun sssftp_s3_api:connectfun/3},
