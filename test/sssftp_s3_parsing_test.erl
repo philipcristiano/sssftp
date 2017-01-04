@@ -26,6 +26,10 @@ filter_root_single_file_test() ->
     ?assertEqual({[], ["file.jpg"]},
                  ?MUT:filter_s3_abs_path("uploads/user/", "/", [make_s3("uploads/user/file.jpg")])).
 
+filter_root_single_file_with_spaces_test() ->
+    ?assertEqual({[], ["file 2.jpg"]},
+                 ?MUT:filter_s3_abs_path("uploads/user/", "/", [make_s3("uploads/user/file 2.jpg")])).
+
 filter_root_single_dir_test() ->
     ?assertEqual({["dir"], []},
                  ?MUT:filter_s3_abs_path("uploads/user/", "/", [make_s3("uploads/user/dir/")])).
