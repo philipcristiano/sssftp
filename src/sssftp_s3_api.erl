@@ -92,7 +92,7 @@ get_cwd(State0) ->
                     user=User},
     Dir = AWS_BUCKET ++ Root ++ "/",
     {true, State2} = get_s3_path(Dir, State1),
-    {file:get_cwd(), State2 }.
+    {{ok, "/"}, State2 }.
 
 is_dir(AbsPath, State0) ->
     ok = lager:debug("is_dir ~p", [AbsPath]),
