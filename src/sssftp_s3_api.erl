@@ -20,6 +20,7 @@
                 uploading_bin=undefined,
                 path=undefined,
                 s3_root=undefined,
+                storage_api=undefined,
                 user=undefined}).
 
 -record(reading_file, {bin=undefined,
@@ -30,12 +31,13 @@ connectfun(User, _IP, _Method) ->
 
 close({writing_file, Path}, State=#state{s3_root=S3Root,
                                          aws_bucket=Bucket,
+                                         storage_api=StorageApi,
                                          uploading_bin=Bin}) ->
 
     FilePath = S3Root ++ Path,
 
     ok = lager:debug("Closing file for writing ~p", [FilePath]),
-    erlcloud_s3:put_object(Bucket, FilePath, Bin),
+    StorageApi:put_object(Bucket, FilePath, Bin),
     {ok, State};
 
 close(_IoDevice, State) ->
@@ -44,6 +46,7 @@ close(_IoDevice, State) ->
 
 delete(Path, State=#state{aws_bucket=Bucket,
                           s3_root=S3Root,
+                          storage_api=StorageApi,
                           ls_info=Contents}) ->
     AbsPath = S3Root ++ Path,
     DirName = filename:dirname(Path),
@@ -54,7 +57,7 @@ delete(Path, State=#state{aws_bucket=Bucket,
     FileExists = lists:member(FileName, Files),
     Result = case FileExists of
         true -> ok = lager:debug("Actually deleting file"),
-                erlcloud_s3:delete_object(Bucket, AbsPath),
+                StorageApi:delete_object(Bucket, AbsPath),
                 ok;
         false -> {error, enoent}
     end,
@@ -63,6 +66,7 @@ delete(Path, State=#state{aws_bucket=Bucket,
 
 del_dir(Path, State=#state{aws_bucket=Bucket,
                            s3_root=S3Root,
+                           storage_api=StorageApi,
                            ls_info=Contents}) ->
     AbsPath = S3Root ++ Path ++ "/",
     ok = lager:debug("Deleting directory ~p ~p", [Path, AbsPath]),
@@ -70,7 +74,7 @@ del_dir(Path, State=#state{aws_bucket=Bucket,
     ok = lager:debug("Dir Contains ~p, ~p", [Dirs, Files]),
     Result = case could_delete(Dirs, Files) of
         true -> ok = lager:debug("Can delete dir."),
-                erlcloud_s3:delete_object(Bucket, AbsPath),
+                StorageApi:delete_object(Bucket, AbsPath),
                 ok;
         false -> ok = lager:debug("Cant delete dir, it still has contents."),
                  {error, eexist}
@@ -83,12 +87,14 @@ could_delete(_, _) -> false.
 
 get_cwd(State0) ->
     AWS_BUCKET = proplists:get_value(aws_bucket, State0),
+    StorageApi = proplists:get_value(storage_api, State0, erlcloud_s3),
     ok = lager:debug("CWD ~p", [{State0, self()}]),
     {ok, User} = sssftp_user_session:get(self()),
     Root = "uploads/" ++ User,
     ok = lager:debug("User is: ~p", [User]),
     State1 = #state{aws_bucket=AWS_BUCKET,
                     s3_root=Root,
+                    storage_api=StorageApi,
                     user=User},
     Dir = AWS_BUCKET ++ Root ++ "/",
     {true, State2} = get_s3_path(Dir, State1),
@@ -103,11 +109,13 @@ is_dir(AbsPath, State0) ->
     IsDir = sssftp_s3_parsing:is_dir(S3Root, AbsPath, Contents),
     {IsDir, State1}.
 
-get_s3_path(Path, State=#state{aws_bucket=Bucket, s3_root=S3Root}) ->
+get_s3_path(Path, State=#state{aws_bucket=Bucket,
+                               s3_root=S3Root,
+                               storage_api=StorageApi}) ->
     Prefix = S3Root ++ Path,
     Options = [{prefix, Prefix}],
     ok = lager:debug("S3 Options ~p", [Options]),
-    Result = erlcloud_s3:list_objects(Bucket, Options),
+    Result = StorageApi:list_objects(Bucket, Options),
     Contents = proplists:get_value(contents, Result),
     {true, State#state{ls_info=Contents,
                        path=Path}}.
@@ -120,10 +128,10 @@ list_dir(AbsPath, State) ->
     LS = lists:append([Files, Dirs]),
     {{ok, LS}, State}.
 
-make_dir(Dir, State=#state{s3_root=S3Root, aws_bucket=Bucket}) ->
+make_dir(Dir, State=#state{s3_root=S3Root, aws_bucket=Bucket, storage_api=StorageApi}) ->
     FilePath = S3Root ++ Dir ++ "/",
     ok = lager:debug("mkdir ~p", [{Bucket, FilePath}]),
-    erlcloud_s3:put_object(Bucket, FilePath, <<"">>),
+    StorageApi:put_object(Bucket, FilePath, <<"">>),
     {ok, State}.
 
 make_symlink(Path2, Path, State) ->
@@ -133,9 +141,9 @@ make_symlink(Path2, Path, State) ->
 open(Path, [binary, write], State) ->
     {{ok, {writing_file, Path}}, State#state{uploading_bin= <<"">>}};
 
-open(Path, [binary, read], State=#state{aws_bucket=Bucket, s3_root=S3Root}) ->
+open(Path, [binary, read], State=#state{aws_bucket=Bucket, s3_root=S3Root, storage_api=StorageApi}) ->
     AbsPath = S3Root ++ Path,
-    Obj = erlcloud_s3:get_object(Bucket, AbsPath),
+    Obj = StorageApi:get_object(Bucket, AbsPath),
     Length = proplists:get_value(content_length, Obj),
     Content = proplists:get_value(content, Obj),
     {ILength, _} = string:to_integer(Length),
