@@ -134,9 +134,9 @@ make_dir(Dir, State=#state{s3_root=S3Root, aws_bucket=Bucket, storage_api=Storag
     StorageApi:put_object(Bucket, FilePath, <<"">>),
     {ok, State}.
 
-make_symlink(Path2, Path, State) ->
+make_symlink(_, _, State) ->
     ok = lager:debug("make_symlink"),
-    {file:make_symlink(Path2, Path), State}.
+    {{error, enotsup}, State}.
 
 open(Path, [binary, write], State) ->
     {{ok, {writing_file, Path}}, State#state{uploading_bin= <<"">>}};
