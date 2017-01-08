@@ -151,9 +151,10 @@ open(Path, [binary, read], State=#state{aws_bucket=Bucket, s3_root=S3Root, stora
     ok = lager:debug("open "),
     {{ok, RF}, State#state{file_position=0}}.
 
-position(IoDevice, {bof, Pos}, State) ->
-    ok = lager:debug("position ~p", [Pos]),
-    {{ok, IoDevice}, State#state{file_position=Pos}}.
+position(#reading_file{length=TotalLength}, {bof, Pos}, State) ->
+    NewPos = erlang:min(TotalLength, Pos),
+    ok = lager:debug("position ~p", [{Pos, TotalLength}]),
+    {{ok, NewPos}, State#state{file_position=NewPos}}.
 
 read(#reading_file{length=TotalLength}, _Len, State=#state{file_position=TotalLength}) ->
     {eof, State};
