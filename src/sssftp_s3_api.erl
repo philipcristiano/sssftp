@@ -107,6 +107,7 @@ is_dir(AbsPath, State0) ->
     S3Root = State1#state.s3_root,
     Contents = State1#state.ls_info,
     IsDir = sssftp_s3_parsing:is_dir(S3Root, AbsPath, Contents),
+    lager:debug("Is This a dir ~p, ~p", [AbsPath, IsDir]),
     {IsDir, State1}.
 
 get_s3_path(Path, State=#state{aws_bucket=Bucket,
@@ -141,15 +142,21 @@ make_symlink(_, _, State) ->
 open(Path, [binary, write], State) ->
     {{ok, {writing_file, Path}}, State#state{uploading_bin= <<"">>}};
 
-open(Path, [binary, read], State=#state{aws_bucket=Bucket, s3_root=S3Root, storage_api=StorageApi}) ->
+open(Path, [binary, read], State=#state{aws_bucket=Bucket, s3_root=S3Root, storage_api=StorageApi, ls_info=Contents}) ->
     AbsPath = S3Root ++ Path,
-    Obj = StorageApi:get_object(Bucket, AbsPath),
-    Length = proplists:get_value(content_length, Obj),
-    Content = proplists:get_value(content, Obj),
-    {ILength, _} = string:to_integer(Length),
-    RF = #reading_file{bin=Content, length=ILength},
-    ok = lager:debug("open "),
-    {{ok, RF}, State#state{file_position=0}}.
+    ItemInfo = find_content_from_key(AbsPath, Contents),
+    case ItemInfo of
+        [] -> {{error, enoent}, State};
+        _  ->
+              lager:debug("Item info ~p", [ItemInfo]),
+              Obj = StorageApi:get_object(Bucket, AbsPath),
+              Length = proplists:get_value(content_length, Obj),
+              Content = proplists:get_value(content, Obj),
+              {ILength, _} = string:to_integer(Length),
+              RF = #reading_file{bin=Content, length=ILength},
+              ok = lager:debug("open "),
+              {{ok, RF}, State#state{file_position=0}}
+    end.
 
 position(#reading_file{length=TotalLength}, {bof, Pos}, State) ->
     NewPos = erlang:min(TotalLength, Pos),
