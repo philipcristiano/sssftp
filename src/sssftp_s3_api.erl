@@ -98,7 +98,7 @@ get_cwd(State0) ->
                     user=User},
     Dir = AWS_BUCKET ++ Root ++ "/",
     {true, State2} = get_s3_path(Dir, State1),
-    {{ok, "/"}, State2 }.
+    {{ok, "/"}, State2}.
 
 is_dir(AbsPath, State0) ->
     ok = lager:debug("is_dir ~p", [AbsPath]),
@@ -118,8 +118,8 @@ get_s3_path(Path, State=#state{aws_bucket=Bucket,
     ok = lager:debug("S3 Options ~p", [Options]),
     Result = StorageApi:list_objects(Bucket, Options),
     Contents = proplists:get_value(contents, Result),
-    {true, State#state{ls_info=Contents,
-                       path=Path}}.
+    State1 = State#state{ls_info=Contents, path=Path},
+    {true, State1}.
 
 list_dir(AbsPath, State) ->
     ok = lager:debug("List dir ~p", [AbsPath]),
