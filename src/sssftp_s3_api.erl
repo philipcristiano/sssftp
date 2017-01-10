@@ -154,7 +154,7 @@ open(Path, [binary, read], State=#state{aws_bucket=Bucket, s3_root=S3Root, stora
               Content = proplists:get_value(content, Obj),
               {ILength, _} = string:to_integer(Length),
               RF = #reading_file{bin=Content, length=ILength},
-              ok = lager:debug("open "),
+              ok = lager:debug("open"),
               {{ok, RF}, State#state{file_position=0}}
     end.
 
