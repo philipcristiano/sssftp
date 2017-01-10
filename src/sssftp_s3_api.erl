@@ -107,7 +107,7 @@ is_dir(AbsPath, State0) ->
     S3Root = State1#state.s3_root,
     Contents = State1#state.ls_info,
     IsDir = sssftp_s3_parsing:is_dir(S3Root, AbsPath, Contents),
-    lager:debug("Is This a dir ~p, ~p", [AbsPath, IsDir]),
+    ok = lager:debug("Is This a dir ~p, ~p", [AbsPath, IsDir]),
     {IsDir, State1}.
 
 get_s3_path(Path, State=#state{aws_bucket=Bucket,
@@ -148,7 +148,7 @@ open(Path, [binary, read], State=#state{aws_bucket=Bucket, s3_root=S3Root, stora
     case ItemInfo of
         [] -> {{error, enoent}, State};
         _  ->
-              lager:debug("Item info ~p", [ItemInfo]),
+              ok = lager:debug("Item info ~p", [ItemInfo]),
               Obj = StorageApi:get_object(Bucket, AbsPath),
               Length = proplists:get_value(content_length, Obj),
               Content = proplists:get_value(content, Obj),
