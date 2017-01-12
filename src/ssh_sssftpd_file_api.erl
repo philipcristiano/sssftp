@@ -14,14 +14,14 @@
 -callback list_dir(file:name(), State::term()) ->
     {{ok, Filenames::term()}, State::term()} | {{error, Reason::term()}, State::term()}.
 -callback make_dir(Dir::term(), State::term()) ->
-    {{ok, State::term()},State::term()} | {{error, Reason::term()}, State::term()}.
+    {ok, State::term()} | {{error, Reason::term()}, State::term()}.
 -callback make_symlink(Path2::term(), Path::term(), State::term()) ->
     {ok, State::term()} | {{error, Reason::term()}, State::term()}.
 -callback open(Path::term(), Flags::term(), State::term()) ->
     {{ok, IoDevice::term()}, State::term()} | {{error, Reason::term()}, State::term()}.
 -callback position(any(), Offs::term(), State::term()) ->
     {{ok, NewPosition::term()}, State::term()} | {{error, Reason::term()}, State::term()}.
--callback read(file:io_device(), Len::term(), State::term()) ->
+-callback read(any(), Len::term(), State::term()) ->
     {{ok, Data::term()},State::term()} | {eof, State::term()} | {{error, Reason::term()}, State::term()}.
 -callback read_link(file:name(), State::term()) ->
     {{ok, FileName::term()}, State::term()} | {{error, Reason::term()}, State::term()}.
@@ -31,7 +31,7 @@
     {{ok, FileInfo::term()}, State::term()} | {{error, Reason::term()},State::term()}.
 -callback rename(file:name(), file:name(), State::term()) ->
     {ok, State::term()} | {{error, Reason::term()}, State::term()}.
--callback write(file:io_device(), Data::term(), State::term()) ->
+-callback write(any(), Data::term(), State::term()) ->
     {ok, State::term()} | {{error, Reason::term()}, State::term()}.
 -callback write_file_info(file:name(),Info::term(), State::term()) ->
     {ok, State::term()} | {{error, Reason::term()}, State::term()}.
