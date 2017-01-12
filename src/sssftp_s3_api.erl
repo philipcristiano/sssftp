@@ -1,6 +1,6 @@
 -module(sssftp_s3_api).
 
--behaviour(ssh_sftpd_file_api).
+-behaviour(ssh_sssftpd_file_api).
 -compile([{parse_transform, lager_transform}]).
 
 -include_lib("kernel/include/file.hrl").
@@ -23,8 +23,12 @@
                 storage_api=undefined,
                 user=undefined}).
 
+-type state() :: #state{}.
+
 -record(reading_file, {bin=undefined,
                        length=undefined}).
+
+-type reading_file() :: #reading_file{}.
 
 connectfun(User, _IP, _Method) ->
     ok = lager:info("User connected ~p", [{User, self()}]).
@@ -158,6 +162,7 @@ open(Path, [binary, read], State=#state{aws_bucket=Bucket, s3_root=S3Root, stora
               {{ok, RF}, State#state{file_position=0}}
     end.
 
+-spec position(reading_file(), {bof, integer()}, state()) -> {{ok, integer}, state()}.
 position(#reading_file{length=TotalLength}, {bof, Pos}, State) ->
     NewPos = erlang:min(TotalLength, Pos),
     ok = lager:debug("position ~p", [{Pos, TotalLength}]),
