@@ -11,7 +11,7 @@ start_link() ->
 init([]) ->
     {Port, _} = string:to_integer(os:getenv("PORT", "8989")),
     AWS_BUCKET = os:getenv("AWS_BUCKET"),
-    lager:info("Starting on port ~p", [Port]),
+    ok = lager:info("Starting on port ~p", [Port]),
 	Procs = [{server,
                {ssh, daemon, [Port, [{system_dir, "/tmp/"},
                               {system_dir, "/etc/ssh"},

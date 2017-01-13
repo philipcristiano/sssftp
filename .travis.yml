@@ -5,4 +5,5 @@ otp_release:
 script:
   - make deps
   - make app
+  - make dialyze
   - make test
