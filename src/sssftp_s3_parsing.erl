@@ -4,6 +4,7 @@
 
 -export([filter_s3_abs_path/3, is_dir/3]).
 
+-spec filter_s3_abs_path(list(), list(), list()) -> {list(), list()}.
 filter_s3_abs_path(S3Root, "/", Contents) ->
     ok = lager:debug("Filter /"),
     filter_s3_abs_path(S3Root, "", Contents);
@@ -28,6 +29,7 @@ filter_s3_abs_path(S3Root, Path, Contents) ->
     FilteredDirs = filter_s3_dirs(StrippedObjs),
     {FilteredDirs, FilteredFiles}.
 
+-spec is_dir(list(), list(), list()) -> boolean().
 is_dir(S3Root, Path, Contents) ->
     ok = lager:debug("Parser is_dir ~p", [Path]),
     AbsPath = normalize_dir_path(S3Root, Path),
