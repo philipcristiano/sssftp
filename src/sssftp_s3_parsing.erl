@@ -36,6 +36,7 @@ is_dir(S3Root, Path, Contents) ->
     ok = lager:debug("Parser is_dir Abspath ~p", [AbsPath]),
     lists:any(fun(El) -> proplists:get_value(key, El) =:= AbsPath end, Contents).
 
+-spec normalize_dir_path(nonempty_string(), list() | nil()) -> list().
 normalize_dir_path(S3Root, "/") ->
     normalize_dir_path(S3Root, "");
 normalize_dir_path(S3Root, [$/|T]) ->
@@ -45,15 +46,18 @@ normalize_dir_path(S3Root, []) ->
 normalize_dir_path(S3Root, Path) ->
     normalize_dir_path(S3Root, Path, lists:last(Path)).
 
+-spec normalize_dir_path(nonempty_string(), list() | nil(), char() | nil()) -> list().
 normalize_dir_path(S3Root, Path, $/) ->
     filename:join([S3Root, Path]);
 normalize_dir_path(S3Root, Path, _Last) ->
     filename:join([S3Root, Path]) ++ "/".
 
 
+-spec strip_path(nonempty_string(), list()) -> list().
 strip_path(Prefix, Strings) when is_list(Prefix) ->
     strip_path(Prefix, string:len(Prefix) + 1, Strings).
 
+-spec strip_path(nonempty_string(), integer(), string()) -> list().
 strip_path(Prefix, Len, [Prefix|T]) when is_integer(Len) ->
     strip_path(Prefix, Len, T);
 strip_path(Prefix, Len, [H|T]) when is_integer(Len) ->
