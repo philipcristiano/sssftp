@@ -27,5 +27,5 @@ Create `$AWS_BUCKET/uploads/$USER` directory for their specific files.
 
 ## Configuration
 
-Port (ENVVAR `PORT`, default 8989) - Port to listen for SSH connections
-AWS Bucket (ENVVAR 'AWS_BUCKET') - The S3 bucket in AWS to read config from
+* Port (ENVVAR `PORT`, default 8989) - Port to listen for SSH connections
+* AWS Bucket (ENVVAR `AWS_BUCKET`) - The S3 bucket in AWS to read config from
