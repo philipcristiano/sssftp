@@ -66,6 +66,7 @@ strip_path(Prefix, Len, [H|T]) when is_integer(Len) ->
 strip_path(_Prefix, _Len, []) ->
     [].
 
+-spec filter_s3_files(list()) -> list().
 filter_s3_files(Paths) ->
     lists:filtermap(fun(El) ->
                 ok = lager:debug("Filtering ~p", [El]),
@@ -75,6 +76,7 @@ filter_s3_files(Paths) ->
                 end
               end, Paths).
 
+-spec filtered_for_multipart(nonempty_string()) -> {true, nonempty_string} | false.
 filtered_for_multipart(El) ->
     Splits = filename:split(El),
     case length(Splits) of
@@ -82,6 +84,7 @@ filtered_for_multipart(El) ->
         _ -> false
     end.
 
+-spec filter_s3_dirs(list()) -> list().
 filter_s3_dirs(Paths) ->
     A =lists:foldl(fun(El, Acc) ->
                        Splits = filename:split(El),
