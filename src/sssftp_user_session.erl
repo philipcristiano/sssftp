@@ -33,13 +33,16 @@
 %%% API functions
 %%%===================================================================
 
+-spec add(pid()| atom(), nonempty_string()) -> ok.
 add(USPid, Username) ->
     ok = lager:debug("Called add"),
     gen_server:call(USPid, {add, self(), Username}).
 
+-spec get(pid()) -> {ok, nonempty_string()} | {error, undefined}.
 get(SessPid) ->
     get(?MODULE, SessPid).
 
+-spec get(pid() | atom(), pid()) -> {ok, nonempty_string()} | {error, undefined}.
 get(USPid, SessPid) ->
     gen_server:call(USPid, {get, SessPid}).
 
