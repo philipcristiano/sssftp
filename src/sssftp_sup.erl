@@ -19,6 +19,7 @@ init([]) ->
                               {connectfun, fun sssftp_s3_api:connectfun/3},
                               {subsystems, [ssh_sftpd:subsystem_spec([
                                     {file_handler, {sssftp_s3_api, [{aws_bucket, AWS_BUCKET}]}},
+                                    {user_auth_server, sssftp_user_session},
                                     {cwd, "/"}])
                                         ]}]]},
                 permanent,

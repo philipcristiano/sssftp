@@ -11,8 +11,12 @@
 host_key(Algorithm, DaemonOptions) ->
     ssh_file:host_key(Algorithm, DaemonOptions).
 
-is_auth_key(Key, User, _DaemonOptions) ->
-    ok = sssftp_user_session:add(sssftp_user_session, User),
+is_auth_key(Key, User, DaemonOptions) ->
+    Subsystems = proplists:get_value(subsystems, DaemonOptions),
+    SFTPOptions = proplists:get_value("sftp", Subsystems),
+    SSHSFTPOptions = proplists:get_value(ssh_sftpd, [SFTPOptions]),
+    UserAuthServer = proplists:get_value(user_auth_server, SSHSFTPOptions),
+    ok = sssftp_user_session:add(UserAuthServer, User),
     OurKey = get_key_for_user(User),
     IsValid = is_valid_key(Key, OurKey),
     ok = lager:info("Key for user '~p' valid? ~p", [User, IsValid]),
