@@ -91,9 +91,10 @@ could_delete(_, _) -> false.
 
 get_cwd(State0) ->
     AWS_BUCKET = proplists:get_value(aws_bucket, State0),
+    UserAuthServer = proplists:get_value(user_auth_server, State0),
     StorageApi = proplists:get_value(storage_api, State0, erlcloud_s3),
     ok = lager:debug("CWD ~p", [{State0, self()}]),
-    {ok, User} = sssftp_user_session:get(self()),
+    {ok, User} = sssftp_user_session:get(UserAuthServer, self()),
     Root = "uploads/" ++ User,
     ok = lager:debug("User is: ~p", [User]),
     State1 = #state{aws_bucket=AWS_BUCKET,

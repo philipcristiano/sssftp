@@ -25,7 +25,8 @@ init_per_testcase(get_cwd_test, Config) ->
     ok = meck:new(erlcloud_s3, []),
     ok = meck:new(sssftp_user_session, []),
 
-    InitState = {initstate, [{aws_bucket, "TESTBUCKET"}]},
+    InitState = {initstate, [{aws_bucket, "TESTBUCKET"},
+                             {user_auth_server, user_auth_server}]},
     [InitState | Config];
 init_per_testcase(_, Config) ->
     application:ensure_all_started(lager),
@@ -34,9 +35,10 @@ init_per_testcase(_, Config) ->
     ok = meck:new(sssftp_user_session, []),
 
     ok = meck:expect(erlcloud_s3, list_objects, fun(_, _) -> [{contents, []}] end),
-    ok = meck:expect(sssftp_user_session, get, fun(_) -> {ok, "USER"} end),
+    ok = meck:expect(sssftp_user_session, get, fun(user_auth_server, _) -> {ok, "USER"} end),
 
-    State0 = [{aws_bucket, "TESTBUCKET"}],
+    State0 = [{aws_bucket, "TESTBUCKET"},
+              {user_auth_server, user_auth_server}],
     {_, State1} = ?MUT:get_cwd(State0),
 
     InitState = {initstate, State1},
@@ -50,7 +52,7 @@ end_per_testcase(_, Config) ->
 get_cwd_test(Config) ->
     InitState = ?config(initstate, Config),
     ok = meck:expect(erlcloud_s3, list_objects, fun(_, _) -> [] end),
-    ok = meck:expect(sssftp_user_session, get, fun(_) -> {ok, "USER"} end),
+    ok = meck:expect(sssftp_user_session, get, fun(user_auth_server, _) -> {ok, "USER"} end),
 
     {{ok, "/"}, _State} = ?MUT:get_cwd(InitState),
 
