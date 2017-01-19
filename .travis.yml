@@ -6,4 +6,4 @@ script:
   - make deps
   - make app
   - make dialyze
-  - make test
+  - make tests
