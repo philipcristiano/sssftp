@@ -8,8 +8,6 @@
 -export([get_cwd_test/1,
          open_test_no_file/1]).
 
--include_lib("sssftp/src/sssftp_s3_api_lib.hrl").
-
 -define(MUT, sssftp_s3_api).
 
 all() -> [{group, test_init}].
