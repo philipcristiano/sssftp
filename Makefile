@@ -8,6 +8,7 @@ LOCAL_DEPS = ssh
 DEPS = lager erlcloud
 EUNIT_OPTS = verbose
 EUNIT_ERL_OPTS = -config sssftpd.config -s lager
+COVER = 1
 
 dep_lager = git https://github.com/basho/lager.git 3.2.4
 dep_erlcloud = git https://github.com/erlcloud/erlcloud.git 2.0.4
