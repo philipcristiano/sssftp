@@ -10,10 +10,6 @@
 make_s3(Key) ->
     [{key, Key}].
 
-make_sample_s3_group() ->
-    [make_s3("uploads/user/"),
-     make_s3("uploads/user/example.jpg")].
-
 filter_empty_test() ->
     ?assertEqual({[], []},
                  ?MUT:filter_s3_abs_path("uploads/user/", "/", [])).
