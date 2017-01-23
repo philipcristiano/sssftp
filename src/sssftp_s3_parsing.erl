@@ -47,8 +47,6 @@ normalize_dir_path(S3Root, Path) ->
     normalize_dir_path(S3Root, Path, lists:last(Path)).
 
 -spec normalize_dir_path(nonempty_string(), list() | nil(), char() | nil()) -> list().
-normalize_dir_path(S3Root, Path, $/) ->
-    filename:join([S3Root, Path]);
 normalize_dir_path(S3Root, Path, _Last) ->
     filename:join([S3Root, Path]) ++ "/".
 
