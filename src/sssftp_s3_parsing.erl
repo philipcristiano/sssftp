@@ -88,7 +88,6 @@ filter_s3_dirs(Paths) ->
                        Splits = filename:split(El),
                        ok = lager:debug("dir splits ~p", [Splits]),
                        case {length(Splits), lists:last(El)}  of
-                           {0, _} -> Acc;
                            {1, $/} -> ok = lager:debug("1 match ~p", [Splits]),
                                       sets:add_element(hd(Splits), Acc);
                            {1, _ } -> Acc;
