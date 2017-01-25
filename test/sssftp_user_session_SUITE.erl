@@ -33,9 +33,16 @@ init_per_testcase(test_with_process, _Case, Config) ->
 init_per_testcase(_Group, _Case, Config) ->
     Config.
 
-end_per_testcase(register_test_2, Config) ->
+end_per_testcase(Case, Config) ->
+    GroupProperties = ?config(tc_group_properties, Config),
+    GroupName = ?config(name, GroupProperties),
+    end_per_testcase(GroupName, Case, Config).
+
+end_per_testcase(test_with_process, _, Config) ->
+    Pid = ?config(uspid, Config),
+    ok = ?MUT:stop(Pid),
     Config;
-end_per_testcase(_, Config) ->
+end_per_testcase(_, _, Config) ->
     Config.
 
 register_test(_Config) ->

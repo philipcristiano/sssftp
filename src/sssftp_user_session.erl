@@ -25,7 +25,8 @@
 %% API
 -export([add/2,
          get/1,
-         get/2]).
+         get/2,
+         stop/1]).
 
 -record(state, {client_pid, user=undefined}).
 
@@ -45,6 +46,10 @@ get(SessPid) ->
 -spec get(pid() | atom(), pid()) -> {ok, nonempty_string()} | {error, undefined}.
 get(USPid, SessPid) ->
     gen_server:call(USPid, {get, SessPid}).
+
+-spec stop(pid() | atom()) -> ok.
+stop(USPid) ->
+    gen_server:call(USPid, stop).
 
 %%--------------------------------------------------------------------
 %% @doc
@@ -112,6 +117,8 @@ handle_call({get, SessPid}, _From, #state{client_pid=OrigSess, user=User}) ->
     Reply = get_resp(User),
     ok = lager:debug("Reply ~p,~p", [User,Reply]),
     {reply, Reply, #state{client_pid=undefined, user=undefined}};
+handle_call(stop, _From, State) ->
+    {stop, normal, ok, State};
 
 handle_call(_Request, _From, State) ->
     Reply = ok,
