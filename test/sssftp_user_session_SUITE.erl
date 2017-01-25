@@ -5,7 +5,9 @@
 
 -export([all/0, groups/0, init_per_testcase/2, end_per_testcase/2]).
 -export([dead_link_removes_user/1,
-         register_test/1, get_without_user_is_error/1]).
+         register_test/1,
+         register_and_get_user/1,
+         get_without_user_is_error/1]).
 
 -export([register_user_and_exit/2]).
 
@@ -19,6 +21,7 @@ groups() -> [{test_registration,
              {test_with_process,
               [],
               [get_without_user_is_error,
+               register_and_get_user,
                dead_link_removes_user]}].
 
 
@@ -47,6 +50,13 @@ end_per_testcase(_, _, Config) ->
 
 register_test(_Config) ->
     ok.
+
+register_and_get_user(Config) ->
+    Username = "username",
+    USPid = ?config(uspid, Config),
+    ok = ?MUT:add(USPid, Username),
+    Resp = ?MUT:get(USPid, self()),
+    ?assertEqual({ok, Username}, Resp).
 
 dead_link_removes_user(Config) ->
     USPid = ?config(uspid, Config),
