@@ -48,13 +48,14 @@ end_per_testcase(_, _, Config) ->
 register_test(_Config) ->
     ok.
 
-dead_link_removes_user(_Config) ->
+dead_link_removes_user(Config) ->
+    USPid = ?config(uspid, Config),
     Ref = make_ref(),
     {Pid, MonRef} = spawn_monitor(?MODULE, register_user_and_exit, [self(), Ref]),
     ok = wait_for_ref(Ref),
     ok = wait_for_monitor(MonRef),
     false = is_process_alive(Pid),
-    Resp = ?MUT:get(self()),
+    Resp = ?MUT:get(USPid, self()),
     ?assertEqual({error, undefined}, Resp),
     ok.
 
