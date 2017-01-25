@@ -11,7 +11,7 @@
 
 -define(MUT, sssftp_user_session).
 
-all() -> [{group, test_registration}].
+all() -> [{group, test_registration}, {group, test_with_process}].
 
 groups() -> [{test_registration,
               [],
