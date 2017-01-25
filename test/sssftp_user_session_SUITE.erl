@@ -7,6 +7,8 @@
 -export([dead_link_removes_user/1,
          register_test/1,
          register_and_get_user/1,
+         register_twice_and_get_user/1,
+         register_twice_with_different_users/1,
          get_without_user_is_error/1]).
 
 -export([register_user_and_exit/2]).
@@ -22,6 +24,8 @@ groups() -> [{test_registration,
               [],
               [get_without_user_is_error,
                register_and_get_user,
+               register_twice_and_get_user,
+               register_twice_with_different_users,
                dead_link_removes_user]}].
 
 
@@ -57,6 +61,22 @@ register_and_get_user(Config) ->
     ok = ?MUT:add(USPid, Username),
     Resp = ?MUT:get(USPid, self()),
     ?assertEqual({ok, Username}, Resp).
+
+register_twice_and_get_user(Config) ->
+    Username = "username",
+    USPid = ?config(uspid, Config),
+    ok = ?MUT:add(USPid, Username),
+    ok = ?MUT:add(USPid, Username),
+    Resp = ?MUT:get(USPid, self()),
+    ?assertEqual({ok, Username}, Resp).
+
+register_twice_with_different_users(Config) ->
+    Username1 = "username1",
+    Username2 = "username2",
+    USPid = ?config(uspid, Config),
+    ok = ?MUT:add(USPid, Username1),
+    Resp = ?MUT:add(USPid, Username2),
+    ?assertEqual({error, already_defined}, Resp).
 
 dead_link_removes_user(Config) ->
     USPid = ?config(uspid, Config),

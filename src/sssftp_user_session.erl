@@ -34,7 +34,7 @@
 %%% API functions
 %%%===================================================================
 
--spec add(pid()| atom(), nonempty_string()) -> ok.
+-spec add(pid()| atom(), nonempty_string()) -> ok | {error, already_defined}.
 add(USPid, Username) ->
     ok = lager:debug("Called add"),
     gen_server:call(USPid, {add, self(), Username}).
@@ -104,7 +104,7 @@ handle_call({add, _SessPid, Username}, _From, #state{user=Username}) ->
     {reply, ok, #state{user=Username}};
 handle_call({add, _SessPid, Username}, _From, #state{user=_IncorrectUser}) ->
     ok = lager:debug("Adding Different User ~p", [Username]),
-    {reply, error, #state{user=Username}};
+    {reply, {error, already_defined}, #state{user=Username}};
 
 handle_call({get, SessPid}, _From, #state{client_pid=undefined, user=User}) ->
     ok = lager:debug("Getting ~p", [SessPid]),
