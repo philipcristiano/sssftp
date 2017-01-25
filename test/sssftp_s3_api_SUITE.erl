@@ -6,7 +6,8 @@
 -export([all/0, groups/0, init_per_testcase/2, end_per_testcase/2]).
 
 -export([get_cwd_test/1,
-         open_test_no_file/1]).
+         open_test_no_file/1,
+         connectfun_test/1]).
 
 -define(MUT, sssftp_s3_api).
 
@@ -15,10 +16,13 @@ all() -> [{group, test_init}].
 groups() -> [{test_init,
              [],
              [get_cwd_test,
-              open_test_no_file]}].
+              open_test_no_file,
+              connectfun_test]}].
 
 
 
+init_per_testcase(connectfun_test, Config) ->
+    Config;
 init_per_testcase(get_cwd_test, Config) ->
     application:ensure_all_started(lager),
 
@@ -44,6 +48,8 @@ init_per_testcase(_, Config) ->
     InitState = {initstate, State1},
     [InitState | Config].
 
+end_per_testcase(connectfun_test, Config) ->
+    Config;
 end_per_testcase(_, Config) ->
     ok = meck:unload(erlcloud_s3),
     ok = meck:unload(sssftp_user_session),
@@ -69,3 +75,5 @@ open_test_no_file(Config) ->
     {{error, enoent}, _State} = ?MUT:open("PATH", [binary, read], InitState),
     ok.
 
+connectfun_test(_Config) ->
+    ?MUT:connectfun(user, ip, method).
