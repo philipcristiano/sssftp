@@ -15,17 +15,22 @@ all() -> [{group, test_registration}].
 
 groups() -> [{test_registration,
               [],
-              [dead_link_removes_user,
-               register_test,
-               get_without_user_is_error]}].
+              [register_test]},
+             {test_with_process,
+              [],
+              [get_without_user_is_error,
+               dead_link_removes_user]}].
 
-init_per_testcase(get_without_user_is_error, Config) ->
+
+init_per_testcase(Case, Config) ->
+    GroupProperties = ?config(tc_group_properties, Config),
+    GroupName = ?config(name, GroupProperties),
+    init_per_testcase(GroupName, Case, Config).
+
+init_per_testcase(test_with_process, _Case, Config) ->
     {ok, USPid} = sssftp_user_session:start_link(),
     [{uspid, USPid} | Config];
-init_per_testcase(dead_link_removes_user, Config) ->
-    {ok, USPid} = sssftp_user_session:start_link(),
-    [{uspid, USPid} | Config];
-init_per_testcase(_, Config) ->
+init_per_testcase(_Group, _Case, Config) ->
     Config.
 
 end_per_testcase(register_test_2, Config) ->
