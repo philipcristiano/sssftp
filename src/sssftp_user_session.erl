@@ -118,11 +118,7 @@ handle_call({get, SessPid}, _From, #state{client_pid=OrigSess, user=User}) ->
     ok = lager:debug("Reply ~p,~p", [User,Reply]),
     {reply, Reply, #state{client_pid=undefined, user=undefined}};
 handle_call(stop, _From, State) ->
-    {stop, normal, ok, State};
-
-handle_call(_Request, _From, State) ->
-    Reply = ok,
-    {reply, Reply, State}.
+    {stop, normal, ok, State}.
 
 
 get_resp(undefined) ->
@@ -154,10 +150,7 @@ handle_cast(_Msg, State) ->
 %% @end
 %%--------------------------------------------------------------------
 handle_info({'EXIT', Pid, _Reason}, State=#state{client_pid=Pid}) ->
-    {noreply, State#state{client_pid=undefined, user=undefined}};
-handle_info(Info, State) ->
-    ok = lager:debug("Unhandled info ~p", [{Info, State}]),
-    {noreply, State}.
+    {noreply, State#state{client_pid=undefined, user=undefined}}.
 
 %%--------------------------------------------------------------------
 %% @private
