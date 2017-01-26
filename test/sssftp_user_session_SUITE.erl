@@ -5,7 +5,7 @@
 
 -export([all/0, groups/0, init_per_testcase/2, end_per_testcase/2]).
 -export([dead_link_removes_user/1,
-         register_test/1,
+         code_change_test/1,
          register_and_get_user/1,
          register_twice_and_get_user/1,
          register_twice_with_different_users/1,
@@ -15,11 +15,11 @@
 
 -define(MUT, sssftp_user_session).
 
-all() -> [{group, test_registration}, {group, test_with_process}].
+all() -> [{group, test_module}, {group, test_with_process}].
 
-groups() -> [{test_registration,
+groups() -> [{test_module,
               [],
-              [register_test]},
+              [code_change_test]},
              {test_with_process,
               [],
               [get_without_user_is_error,
@@ -52,8 +52,9 @@ end_per_testcase(test_with_process, _, Config) ->
 end_per_testcase(_, _, Config) ->
     Config.
 
-register_test(_Config) ->
-    ok.
+code_change_test(_Config) ->
+    Ref = make_ref(),
+    {ok, Ref} = ?MUT:code_change(a, Ref, b).
 
 register_and_get_user(Config) ->
     Username = "username",
@@ -94,6 +95,7 @@ get_without_user_is_error(_Config) ->
     ?assertEqual({error, undefined}, Resp),
     ok.
 
+% Helpers
 register_user_and_exit(Parent, Ref) ->
     ok = ?MUT:add(?MUT, <<"Username">>),
     Parent ! Ref,
