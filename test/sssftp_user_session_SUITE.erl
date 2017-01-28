@@ -5,6 +5,7 @@
 
 -export([all/0, groups/0, init_per_testcase/2, end_per_testcase/2]).
 -export([dead_link_removes_user/1,
+         cast_test/1,
          code_change_test/1,
          register_and_get_user/1,
          register_twice_and_get_user/1,
@@ -19,7 +20,8 @@ all() -> [{group, test_module}, {group, test_with_process}].
 
 groups() -> [{test_module,
               [],
-              [code_change_test]},
+              [code_change_test,
+               cast_test]},
              {test_with_process,
               [],
               [get_without_user_is_error,
@@ -51,6 +53,10 @@ end_per_testcase(test_with_process, _, Config) ->
     Config;
 end_per_testcase(_, _, Config) ->
     Config.
+
+cast_test(_Config) ->
+    Ref = make_ref(),
+    {noreply, Ref} = ?MUT:handle_cast(a, Ref).
 
 code_change_test(_Config) ->
     Ref = make_ref(),
