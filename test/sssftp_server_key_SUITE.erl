@@ -5,7 +5,8 @@
 
 -export([all/0, groups/0, init_per_testcase/2, end_per_testcase/2]).
 
--export([is_auth_key_test/1,
+-export([host_key_test/1,
+         is_auth_key_test/1,
          is_auth_key_incorrect_test/1]).
 
 -define(MUT, sssftp_server_key).
@@ -15,7 +16,8 @@ all() -> [{group, test_init}].
 groups() -> [{test_init,
              [],
              [is_auth_key_test,
-              is_auth_key_incorrect_test]}].
+              is_auth_key_incorrect_test,
+              host_key_test]}].
 
 
 init_per_testcase(_, Config) ->
@@ -23,6 +25,12 @@ init_per_testcase(_, Config) ->
 
 end_per_testcase(_, Config) ->
     Config.
+
+host_key_test(_Config) ->
+    ok = meck:new(ssh_file, []),
+    ok = meck:expect(ssh_file, host_key, fun(algorithm, daemon_opts) -> ok end),
+
+    ok = ?MUT:host_key(algorithm, daemon_opts).
 
 is_auth_key_test(_Config) ->
     DaemonOptions = [{subsystems,
