@@ -1,10 +1,18 @@
 -module(sssftp).
 
--export([add_sftp_server/1]).
+-export([add_sftp_server/1,
+         create_child_spec/1]).
 
 -compile([{parse_transform, lager_transform}]).
 
 add_sftp_server(Opts) ->
+    {ok, [SFTPProc| UserSessionProc]} = create_child_spec(Opts),
+    {ok, _} = supervisor:start_child(sssftp_sup, UserSessionProc),
+    {ok, _} = supervisor:start_child(sssftp_sup, SFTPProc),
+    ok.
+
+
+create_child_spec(Opts) ->
     Port = proplists:get_value(port, Opts),
     AWS_BUCKET = proplists:get_value(aws_bucket, Opts),
     ok = lager:info("Starting on port ~p", [Port]),
@@ -27,7 +35,6 @@ add_sftp_server(Opts) ->
                        permanent,
                        5000,
                        worker,
-                       [user_session]},
-    {ok, _} = supervisor:start_child(sssftp_sup, UserSessionProc),
-    {ok, _} = supervisor:start_child(sssftp_sup, SFTPProc),
-    ok.
+                       [sssftp_user_session]},
+    {ok, [UserSessionProc, SFTPProc]}.
+
