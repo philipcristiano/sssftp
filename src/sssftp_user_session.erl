@@ -150,7 +150,10 @@ handle_cast(_Msg, State) ->
 %% @end
 %%--------------------------------------------------------------------
 handle_info({'EXIT', Pid, _Reason}, State=#state{client_pid=Pid}) ->
-    {noreply, State#state{client_pid=undefined, user=undefined}}.
+    {noreply, State#state{client_pid=undefined, user=undefined}};
+handle_info({'EXIT', _Pid, _Reason}, State) ->
+    io:format("Handle info"),
+    {noreply, State}.
 
 %%--------------------------------------------------------------------
 %% @private

@@ -5,6 +5,7 @@
 
 -export([all/0, groups/0, init_per_testcase/2, end_per_testcase/2]).
 -export([dead_link_removes_user/1,
+         dead_link_without_user_is_ok/1,
          cast_test/1,
          code_change_test/1,
          register_and_get_user/1,
@@ -12,7 +13,8 @@
          register_twice_with_different_users/1,
          get_without_user_is_error/1]).
 
--export([register_user_and_exit/2]).
+-export([register_user_and_exit/2,
+         link_and_exit/1]).
 
 -define(MUT, sssftp_user_session).
 
@@ -28,6 +30,7 @@ groups() -> [{test_module,
                register_and_get_user,
                register_twice_and_get_user,
                register_twice_with_different_users,
+               dead_link_without_user_is_ok,
                dead_link_removes_user]}].
 
 
@@ -96,6 +99,18 @@ dead_link_removes_user(Config) ->
     ?assertEqual({error, undefined}, Resp),
     ok.
 
+dead_link_without_user_is_ok(Config) ->
+    USPid = ?config(uspid, Config),
+    {Pid, MonRef} = spawn_monitor(?MODULE, link_and_exit, [USPid]),
+    io:format("Pid and ref ~p", [{Pid, MonRef}]),
+    io:format("Test's Messages ~p", [{erlang:process_info(self(), messages)}]),
+    ok = wait_for_monitor(MonRef),
+    false = is_process_alive(Pid),
+    Resp = ?MUT:get(USPid, self()),
+    ?assertEqual({error, undefined}, Resp),
+    ok.
+
+
 get_without_user_is_error(_Config) ->
     Resp = ?MUT:get(self()),
     ?assertEqual({error, undefined}, Resp),
@@ -105,6 +120,10 @@ get_without_user_is_error(_Config) ->
 register_user_and_exit(Parent, Ref) ->
     ok = ?MUT:add(?MUT, <<"Username">>),
     Parent ! Ref,
+    ok.
+
+link_and_exit(Pid) ->
+    ok = erlang:link(Pid),
     ok.
 
 wait_for_ref(Ref) ->
