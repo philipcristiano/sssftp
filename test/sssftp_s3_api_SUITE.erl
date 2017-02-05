@@ -6,6 +6,7 @@
 -export([all/0, groups/0, init_per_testcase/2, end_per_testcase/2]).
 
 -export([get_cwd_test/1,
+         list_root_dir_test/1,
          open_test_no_file/1,
          connectfun_test/1]).
 
@@ -17,6 +18,7 @@ groups() -> [{test_init,
              [],
              [get_cwd_test,
               open_test_no_file,
+              list_root_dir_test,
               connectfun_test]}].
 
 
@@ -37,8 +39,11 @@ init_per_testcase(_, Config) ->
 
     ok = meck:new(erlcloud_s3, []),
     ok = meck:new(sssftp_user_session, []),
+    Contents = [
+        [{key, "uploads/USER/file.txt"},
+         {content_length, 1024}]],
 
-    ok = meck:expect(erlcloud_s3, list_objects, fun(_, _) -> [{contents, []}] end),
+    ok = meck:expect(erlcloud_s3, list_objects, fun(_, _) -> [{contents, Contents}] end),
     ok = meck:expect(sssftp_user_session, get, fun(user_auth_server, _) -> {ok, "USER"} end),
 
     State0 = [{aws_bucket, "TESTBUCKET"},
@@ -61,6 +66,20 @@ get_cwd_test(Config) ->
     ok = meck:expect(sssftp_user_session, get, fun(user_auth_server, _) -> {ok, "USER"} end),
 
     {{ok, "/"}, _State} = ?MUT:get_cwd(InitState),
+
+    true = meck:validate(erlcloud_s3),
+    true = meck:validate(sssftp_user_session),
+
+    ok.
+
+list_root_dir_test(Config) ->
+    InitState = ?config(initstate, Config),
+    ok = meck:expect(erlcloud_s3, list_objects, fun(_, _) -> [] end),
+    ok = meck:expect(sssftp_user_session, get, fun(user_auth_server, _) -> {ok, "USER"} end),
+
+    {{ok, LS}, _State1} = ?MUT:list_dir("/", InitState),
+
+    ?assertEqual(["file.txt"], LS),
 
     true = meck:validate(erlcloud_s3),
     true = meck:validate(sssftp_user_session),
