@@ -35,7 +35,7 @@ init_per_testcase(get_cwd_test, Config) ->
                              {user_auth_server, user_auth_server}]},
     [InitState | Config];
 init_per_testcase(_, Config) ->
-    application:ensure_all_started(lager),
+    ok = lager_common_test_backend:bounce(debug),
 
     ok = meck:new(erlcloud_s3, []),
     ok = meck:new(sssftp_user_session, []),
