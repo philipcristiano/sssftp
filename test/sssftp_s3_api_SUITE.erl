@@ -74,8 +74,6 @@ get_cwd_test(Config) ->
 
 list_root_dir_test(Config) ->
     InitState = ?config(initstate, Config),
-    ok = meck:expect(erlcloud_s3, list_objects, fun(_, _) -> [] end),
-    ok = meck:expect(sssftp_user_session, get, fun(user_auth_server, _) -> {ok, "USER"} end),
 
     {{ok, LS}, _State1} = ?MUT:list_dir("/", InitState),
 
