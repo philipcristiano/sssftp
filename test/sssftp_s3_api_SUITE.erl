@@ -98,6 +98,7 @@ get_file_test(Config) ->
     {{ok, FileState0}, State2} = ?MUT:open(Path, [binary,read], State1),
     {{ok, 0}, State3} = ?MUT:position(FileState0, {bof, 0}, State2),
     {{ok, Data}, State4} = ?MUT:read(FileState0, 1024, State3),
+    {ok, _State5} = ?MUT:close(FileState0, State4),
 
     true = meck:validate(erlcloud_s3),
     true = meck:validate(sssftp_user_session),
