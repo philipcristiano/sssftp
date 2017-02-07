@@ -9,6 +9,7 @@
          list_root_dir_test/1,
          open_test_no_file/1,
          get_file_test/1,
+         put_file_test/1,
          connectfun_test/1]).
 
 -define(MUT, sssftp_s3_api).
@@ -21,6 +22,7 @@ groups() -> [{test_init,
               open_test_no_file,
               list_root_dir_test,
               get_file_test,
+              put_file_test,
               connectfun_test]}].
 
 
@@ -99,6 +101,23 @@ get_file_test(Config) ->
     {{ok, 0}, State3} = ?MUT:position(FileState0, {bof, 0}, State2),
     {{ok, Data}, State4} = ?MUT:read(FileState0, 1024, State3),
     {ok, _State5} = ?MUT:close(FileState0, State4),
+
+    true = meck:validate(erlcloud_s3),
+    true = meck:validate(sssftp_user_session),
+
+    ok.
+
+put_file_test(Config) ->
+    InitState = ?config(initstate, Config),
+    Path = "/uploaded_file.txt",
+    Size = 1024,
+    Data = crypto:strong_rand_bytes(Size),
+    ok = meck:expect(erlcloud_s3, put_object, fun("TESTBUCKET", "uploads/USER/uploaded_file.txt", UploadedData) -> UploadedData = Data end),
+
+    {false, State1} = ?MUT:is_dir(Path, InitState),
+    {{ok, FileState0}, State2} = ?MUT:open(Path, [binary, write], State1),
+    {ok, State3} = ?MUT:write(FileState0, Data, State2),
+    {ok, _State4} = ?MUT:close(FileState0, State3),
 
     true = meck:validate(erlcloud_s3),
     true = meck:validate(sssftp_user_session),
