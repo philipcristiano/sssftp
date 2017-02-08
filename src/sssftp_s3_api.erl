@@ -225,9 +225,9 @@ read_info(Path, State=#state{ls_info=Info, s3_root=Prefix}) ->
     ok = lager:debug("Info ~p", [{Data, FileInfo}]),
     {{ok, FileInfo}, State}.
 
-rename(Path, Path2, State) ->
+rename(_Path, _Path2, State) ->
     ok = lager:debug("rename"),
-    {file:rename(Path, Path2), State}.
+    {{error, exdev}, State}.
 
 write({writing_file, _Path}, Data, State=#state{uploading_bin=Bin}) ->
     ok = lager:debug("write"),
