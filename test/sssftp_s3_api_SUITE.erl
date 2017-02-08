@@ -116,8 +116,9 @@ put_file_test(Config) ->
 
     {false, State1} = ?MUT:is_dir(Path, InitState),
     {{ok, FileState0}, State2} = ?MUT:open(Path, [binary, write], State1),
-    {ok, State3} = ?MUT:write(FileState0, Data, State2),
-    {ok, _State4} = ?MUT:close(FileState0, State3),
+    {{ok, FileState0}, State3} = ?MUT:position(FileState0, {bof, 0}, State2),
+    {ok, State4} = ?MUT:write(FileState0, Data, State3),
+    {ok, _State5} = ?MUT:close(FileState0, State4),
 
     true = meck:validate(erlcloud_s3),
     true = meck:validate(sssftp_user_session),
