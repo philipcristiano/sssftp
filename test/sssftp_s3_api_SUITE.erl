@@ -92,7 +92,7 @@ get_file_test(Config) ->
     Path = "/file.txt",
     Size = 1024,
     Data = crypto:strong_rand_bytes(Size),
-    Object = [{content_length, Size},
+    Object = [{content_length, erlang:integer_to_list(Size)},
               {content, Data}],
     ok = meck:expect(erlcloud_s3, get_object, fun("TESTBUCKET", "uploads/USER/file.txt") -> Object end),
 
@@ -100,7 +100,9 @@ get_file_test(Config) ->
     {{ok, FileState0}, State2} = ?MUT:open(Path, [binary,read], State1),
     {{ok, 0}, State3} = ?MUT:position(FileState0, {bof, 0}, State2),
     {{ok, Data}, State4} = ?MUT:read(FileState0, 1024, State3),
-    {ok, _State5} = ?MUT:close(FileState0, State4),
+    {{ok, 1024}, State5} = ?MUT:position(FileState0, {bof, 1024}, State4),
+    {eof, State6} = ?MUT:read(FileState0, {bof, 1024}, State5),
+    {ok, _} = ?MUT:close(FileState0, State6),
 
     true = meck:validate(erlcloud_s3),
     true = meck:validate(sssftp_user_session),
