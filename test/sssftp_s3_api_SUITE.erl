@@ -10,6 +10,8 @@
          open_test_no_file/1,
          get_file_test/1,
          put_file_test/1,
+         delete_file_test/1,
+         delete_file_doesnt_exist_test/1,
          connectfun_test/1]).
 
 -define(MUT, sssftp_s3_api).
@@ -23,6 +25,8 @@ groups() -> [{test_init,
               list_root_dir_test,
               get_file_test,
               put_file_test,
+              delete_file_test,
+              delete_file_doesnt_exist_test,
               connectfun_test]}].
 
 
@@ -126,6 +130,30 @@ put_file_test(Config) ->
     true = meck:validate(sssftp_user_session),
 
     ok.
+
+delete_file_test(Config) ->
+    InitState = ?config(initstate, Config),
+    Path = "/file.txt",
+    ok = meck:expect(erlcloud_s3, delete_object, fun("TESTBUCKET", "uploads/USER/file.txt") -> ok end),
+
+    {false, State1} = ?MUT:is_dir(Path, InitState),
+    {ok, _State2} = ?MUT:delete(Path, State1),
+
+    true = meck:validate(erlcloud_s3),
+    true = meck:validate(sssftp_user_session),
+    ok.
+
+delete_file_doesnt_exist_test(Config) ->
+    InitState = ?config(initstate, Config),
+    Path = "/not-the-file.txt",
+
+    {false, State1} = ?MUT:is_dir(Path, InitState),
+    {{error, enoent}, _State2} = ?MUT:delete(Path, State1),
+
+    true = meck:validate(erlcloud_s3),
+    true = meck:validate(sssftp_user_session),
+    ok.
+
 
 open_test_no_file(Config) ->
     InitState = ?config(initstate, Config),
