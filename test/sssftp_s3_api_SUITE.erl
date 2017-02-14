@@ -12,6 +12,7 @@
          put_file_test/1,
          delete_file_test/1,
          delete_file_doesnt_exist_test/1,
+         make_symlink_is_error_test/1,
          connectfun_test/1]).
 
 -define(MUT, sssftp_s3_api).
@@ -27,6 +28,7 @@ groups() -> [{test_init,
               put_file_test,
               delete_file_test,
               delete_file_doesnt_exist_test,
+              make_symlink_is_error_test,
               connectfun_test]}].
 
 
@@ -154,6 +156,16 @@ delete_file_doesnt_exist_test(Config) ->
     true = meck:validate(sssftp_user_session),
     ok.
 
+make_symlink_is_error_test(Config) ->
+    InitState = ?config(initstate, Config),
+    Path = "/file.txt",
+    SymLinkPath = "/file.txt",
+
+    {{error, enotsup}, _State1} = ?MUT:make_symlink(Path, SymLinkPath, InitState),
+
+    true = meck:validate(erlcloud_s3),
+    true = meck:validate(sssftp_user_session),
+    ok.
 
 open_test_no_file(Config) ->
     InitState = ?config(initstate, Config),
