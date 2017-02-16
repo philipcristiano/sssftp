@@ -13,6 +13,7 @@
          delete_file_test/1,
          delete_file_doesnt_exist_test/1,
          make_symlink_is_error_test/1,
+         make_dir_test/1,
          connectfun_test/1]).
 
 -define(MUT, sssftp_s3_api).
@@ -29,6 +30,7 @@ groups() -> [{test_init,
               delete_file_test,
               delete_file_doesnt_exist_test,
               make_symlink_is_error_test,
+              make_dir_test,
               connectfun_test]}].
 
 
@@ -169,10 +171,18 @@ make_symlink_is_error_test(Config) ->
 
 open_test_no_file(Config) ->
     InitState = ?config(initstate, Config),
-    io:format("State ~p", [InitState]),
     ok = meck:expect(erlcloud_s3, list_objects, fun(_, _) -> [] end),
 
     {{error, enoent}, _State} = ?MUT:open("PATH", [binary, read], InitState),
+    ok.
+
+make_dir_test(Config) ->
+    InitState = ?config(initstate, Config),
+    Path = "/new_dir",
+    FullPath = "uploads/USER" ++ Path ++ "/",
+    ok = meck:expect(erlcloud_s3, put_object, fun(_, F, <<"">>) -> F = FullPath end),
+
+    {ok, InitState} = ?MUT:make_dir(Path, InitState),
     ok.
 
 connectfun_test(_Config) ->
