@@ -27,5 +27,13 @@ Create `$AWS_BUCKET/uploads/$USER` directory for their specific files.
 
 ## Configuration
 
-* Port (ENVVAR `PORT`, default 8989) - Port to listen for SSH connections
-* AWS Bucket (ENVVAR `AWS_BUCKET`) - The S3 bucket in AWS to read config from
+Configuration is provided by a config file defining the SFTP servers to run
+
+```
+[{sssftp, [
+    {servers, [
+        [{port, 8989}, {aws_bucket, "sssftpd-test"}]
+    ]}]}].
+```
+
+At the moment only 1 server can be defined, although the ability to support more is planned.
