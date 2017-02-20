@@ -12,7 +12,8 @@
 -compile([{parse_transform, lager_transform}]).
 
 %% API functions
--export([start_link/0]).
+-export([start_link/0,
+         start_link/1]).
 
 %% gen_server callbacks
 -export([init/1,
@@ -59,7 +60,10 @@ stop(USPid) ->
 %% @end
 %%--------------------------------------------------------------------
 start_link() ->
-    gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
+    start_link(?MODULE).
+
+start_link(ID) ->
+    gen_server:start_link({local, ID}, ?MODULE, [], []).
 
 %%%===================================================================
 %%% gen_server callbacks

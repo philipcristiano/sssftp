@@ -36,4 +36,4 @@ Configuration is provided by a config file defining the SFTP servers to run
     ]}]}].
 ```
 
-At the moment only 1 server can be defined, although the ability to support more is planned.
+Multiple port/bucket combinations can be used although they will share the same credentials.
