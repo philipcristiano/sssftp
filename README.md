@@ -36,7 +36,7 @@ Configuration is provided by a config file defining the SFTP servers to run
     ]}]}].
 ```
 
-Multiple port/bucket combinations can be used although they will share the same credentials as defined from the environment variable `AWS_BUCKET`
+Multiple port/bucket combinations can be used.
 
 In addition to `port` and `aws_bucket` are `role` and `external_id`. `role` and `external_id` will be used if defined to assume a role from another account.
 

@@ -32,6 +32,9 @@ create_child_spec(Opts) ->
                                                                     RoleOpt,
                                                                     ExternalIdOpt,
                                                                     UserAuthServerOpt]}},
+                                    {aws_bucket, AWS_BUCKET},
+                                    RoleOpt,
+                                    ExternalIdOpt,
                                     UserAuthServerOpt,
                                     {cwd, "/"}])
                                         ]}]]},

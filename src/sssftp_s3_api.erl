@@ -12,6 +12,8 @@
 
 -export([connectfun/3]).
 
+-export([assume_role/3]).
+
 -record(state, {aws_bucket=undefined,
                 dirs=undefined,
                 ls_info=undefined,
@@ -93,16 +95,17 @@ del_dir(Path, State=#state{aws_bucket=Bucket,
 could_delete([], []) -> true;
 could_delete(_, _) -> false.
 
-assume_role(Config, Options) ->
+assume_role(Config, Options, Seconds) ->
     Role = proplists:get_value(role, Options),
     Id = proplists:get_value(external_id, Options),
-    assume_role(Config, Role, Id).
+    assume_role(Config, Role, Id, Seconds).
 
-assume_role(Config, undefined, undefined) ->
+assume_role(Config, undefined, undefined, _Seconds) ->
     Config;
-assume_role(Config, Role, Id) ->
+assume_role(Config, Role, Id, Seconds) ->
     ok = lager:debug("Assuming role ~p", [Role]),
-    {AssumedConfig, _} = erlcloud_sts:assume_role(Config, Role, "sssftp", 900, Id),
+    {AssumedConfig, _} = erlcloud_sts:assume_role(Config, Role, "sssftp", Seconds, Id),
+    ok = lager:debug("Assumed role"),
     AssumedConfig.
 
 get_cwd(State0) ->
@@ -111,7 +114,7 @@ get_cwd(State0) ->
     StorageApi = proplists:get_value(storage_api, State0, erlcloud_s3),
     {ok, StorageConfig1} = erlcloud_aws:auto_config(),
     ok = lager:debug("Got config ~p", [StorageConfig1]),
-    StorageConfig2 = assume_role(StorageConfig1, State0),
+    StorageConfig2 = assume_role(StorageConfig1, State0, 900),
     ok = lager:debug("Got role"),
     ok = lager:debug("CWD ~p", [{State0, self()}]),
 
