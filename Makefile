@@ -4,7 +4,7 @@ PROJECT_VERSION = 0.1.0
 
 TEST_DEPS = meck
 SHELL_DEPS = sync
-LOCAL_DEPS = ssh
+LOCAL_DEPS = sasl ssh
 DEPS = lager erlcloud
 EUNIT_OPTS = verbose
 EUNIT_ERL_OPTS = -config sssftpd.config -s lager
