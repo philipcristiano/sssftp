@@ -41,6 +41,7 @@ init_per_testcase(get_cwd_test, Config) ->
     application:ensure_all_started(lager),
 
     ok = meck:new(erlcloud_s3, []),
+    ok = meck:new(erlcloud_aws, []),
     ok = meck:new(sssftp_user_session, []),
 
     InitState = {initstate, [{aws_bucket, "TESTBUCKET"},
@@ -50,12 +51,14 @@ init_per_testcase(_, Config) ->
     ok = lager_common_test_backend:bounce(debug),
 
     ok = meck:new(erlcloud_s3, []),
+    ok = meck:new(erlcloud_aws, []),
     ok = meck:new(sssftp_user_session, []),
     Contents = [
         [{key, "uploads/USER/file.txt"},
          {content_length, 1024}]],
 
-    ok = meck:expect(erlcloud_s3, list_objects, fun(_, _) -> [{contents, Contents}] end),
+    ok = meck:expect(erlcloud_s3, list_objects, fun(_, _, _) -> [{contents, Contents}] end),
+    ok = meck:expect(erlcloud_aws, auto_config, fun() -> {ok, autoconfig} end),
     ok = meck:expect(sssftp_user_session, get, fun(user_auth_server, _) -> {ok, "USER"} end),
 
     State0 = [{aws_bucket, "TESTBUCKET"},
@@ -74,7 +77,8 @@ end_per_testcase(_, Config) ->
 
 get_cwd_test(Config) ->
     InitState = ?config(initstate, Config),
-    ok = meck:expect(erlcloud_s3, list_objects, fun(_, _) -> [] end),
+    ok = meck:expect(erlcloud_s3, list_objects, fun(_, _, _) -> [] end),
+    ok = meck:expect(erlcloud_aws, auto_config, fun() -> {ok, autoconfig} end),
     ok = meck:expect(sssftp_user_session, get, fun(user_auth_server, _) -> {ok, "USER"} end),
     {{ok, "/"}, _State} = ?MUT:get_cwd(InitState),
 
@@ -102,7 +106,7 @@ get_file_test(Config) ->
     Data = crypto:strong_rand_bytes(Size),
     Object = [{content_length, erlang:integer_to_list(Size)},
               {content, Data}],
-    ok = meck:expect(erlcloud_s3, get_object, fun("TESTBUCKET", "uploads/USER/file.txt") -> Object end),
+    ok = meck:expect(erlcloud_s3, get_object, fun("TESTBUCKET", "uploads/USER/file.txt", _) -> Object end),
 
     {false, State1} = ?MUT:is_dir(Path, InitState),
     {{ok, FileState0}, State2} = ?MUT:open(Path, [binary,read], State1),
@@ -122,7 +126,7 @@ put_file_test(Config) ->
     Path = "/uploaded_file.txt",
     Size = 1024,
     Data = crypto:strong_rand_bytes(Size),
-    ok = meck:expect(erlcloud_s3, put_object, fun("TESTBUCKET", "uploads/USER/uploaded_file.txt", UploadedData) -> UploadedData = Data end),
+    ok = meck:expect(erlcloud_s3, put_object, fun("TESTBUCKET", "uploads/USER/uploaded_file.txt", UploadedData, _) -> UploadedData = Data end),
 
     {false, State1} = ?MUT:is_dir(Path, InitState),
     {{ok, FileState0}, State2} = ?MUT:open(Path, [binary, write], State1),
@@ -138,7 +142,7 @@ put_file_test(Config) ->
 delete_file_test(Config) ->
     InitState = ?config(initstate, Config),
     Path = "/file.txt",
-    ok = meck:expect(erlcloud_s3, delete_object, fun("TESTBUCKET", "uploads/USER/file.txt") -> ok end),
+    ok = meck:expect(erlcloud_s3, delete_object, fun("TESTBUCKET", "uploads/USER/file.txt", _) -> ok end),
 
     {false, State1} = ?MUT:is_dir(Path, InitState),
     {ok, _State2} = ?MUT:delete(Path, State1),
@@ -171,7 +175,7 @@ make_symlink_is_error_test(Config) ->
 
 open_test_no_file(Config) ->
     InitState = ?config(initstate, Config),
-    ok = meck:expect(erlcloud_s3, list_objects, fun(_, _) -> [] end),
+    ok = meck:expect(erlcloud_s3, list_objects, fun(_, _, _) -> [] end),
 
     {{error, enoent}, _State} = ?MUT:open("PATH", [binary, read], InitState),
     ok.
@@ -180,7 +184,7 @@ make_dir_test(Config) ->
     InitState = ?config(initstate, Config),
     Path = "/new_dir",
     FullPath = "uploads/USER" ++ Path ++ "/",
-    ok = meck:expect(erlcloud_s3, put_object, fun(_, F, <<"">>) -> F = FullPath end),
+    ok = meck:expect(erlcloud_s3, put_object, fun(_, F, <<"">>, _) -> F = FullPath end),
 
     {ok, InitState} = ?MUT:make_dir(Path, InitState),
     ok.

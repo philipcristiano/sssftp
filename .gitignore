@@ -11,6 +11,7 @@ rel/example_project
 
 # erlang.mk
 /.erlang.mk
+/sssftp.d
 
 /logs
 /log

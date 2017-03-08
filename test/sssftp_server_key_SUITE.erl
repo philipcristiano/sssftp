@@ -39,10 +39,12 @@ is_auth_key_test(_Config) ->
                                 [{user_auth_server, user_auth_server}]}}]}],
 
     ok = meck:new(erlcloud_s3, []),
+    ok = meck:new(erlcloud_aws, []),
     ok = meck:new(sssftp_user_session, []),
     ok = meck:new(public_key, []),
 
-    ok = meck:expect(erlcloud_s3, get_object, fun(_, _) -> [{contents, []}] end),
+    ok = meck:expect(erlcloud_s3, get_object, fun(_, _, _) -> [{contents, []}] end),
+    ok = meck:expect(erlcloud_aws, auto_config, fun() -> {ok, autoconfig} end),
     ok = meck:expect(sssftp_user_session, add, fun(user_auth_server, _) -> ok end),
     ok = meck:expect(public_key, ssh_decode, fun(_, public_key) -> [{key, undefined} | undefined] end),
 
@@ -55,10 +57,12 @@ is_auth_key_incorrect_test(_Config) ->
                                 [{user_auth_server, user_auth_server}]}}]}],
 
     ok = meck:new(erlcloud_s3, []),
+    ok = meck:new(erlcloud_aws, []),
     ok = meck:new(sssftp_user_session, []),
     ok = meck:new(public_key, []),
 
-    ok = meck:expect(erlcloud_s3, get_object, fun(_, _) -> [{contents, []}] end),
+    ok = meck:expect(erlcloud_s3, get_object, fun(_, _, _) -> [{contents, []}] end),
+    ok = meck:expect(erlcloud_aws, auto_config, fun() -> {ok, autoconfig} end),
     ok = meck:expect(sssftp_user_session, add, fun(user_auth_server, _) -> ok end),
     ok = meck:expect(public_key, ssh_decode, fun(_, public_key) -> [{incorrect_key, undefined} | undefined] end),
 
