@@ -6,6 +6,7 @@
 -export([all/0, groups/0, init_per_testcase/2, end_per_testcase/2]).
 
 -export([get_cwd_test/1,
+         get_cwd_test_with_role/1,
          list_root_dir_test/1,
          open_test_no_file/1,
          get_file_test/1,
@@ -23,6 +24,7 @@ all() -> [{group, test_init}].
 groups() -> [{test_init,
              [],
              [get_cwd_test,
+              get_cwd_test_with_role,
               open_test_no_file,
               list_root_dir_test,
               get_file_test,
@@ -45,6 +47,19 @@ init_per_testcase(get_cwd_test, Config) ->
     ok = meck:new(sssftp_user_session, []),
 
     InitState = {initstate, [{aws_bucket, "TESTBUCKET"},
+                             {user_auth_server, user_auth_server}]},
+    [InitState | Config];
+init_per_testcase(get_cwd_test_with_role, Config) ->
+    application:ensure_all_started(lager),
+
+    ok = meck:new(erlcloud_s3, []),
+    ok = meck:new(erlcloud_aws, []),
+    ok = meck:new(erlcloud_sts, []),
+    ok = meck:new(sssftp_user_session, []),
+
+    InitState = {initstate, [{aws_bucket, "TESTBUCKET"},
+                             {role, "AWS_ROLE"},
+                             {external_id, "EXTERNAL_ID"},
                              {user_auth_server, user_auth_server}]},
     [InitState | Config];
 init_per_testcase(_, Config) ->
@@ -80,6 +95,23 @@ get_cwd_test(Config) ->
     ok = meck:expect(erlcloud_s3, list_objects, fun(_, _, _) -> [] end),
     ok = meck:expect(erlcloud_aws, auto_config, fun() -> {ok, autoconfig} end),
     ok = meck:expect(sssftp_user_session, get, fun(user_auth_server, _) -> {ok, "USER"} end),
+    {{ok, "/"}, _State} = ?MUT:get_cwd(InitState),
+
+    true = meck:validate(erlcloud_s3),
+    true = meck:validate(sssftp_user_session),
+
+    ok.
+
+get_cwd_test_with_role(Config) ->
+    InitState = ?config(initstate, Config),
+    ok = meck:expect(erlcloud_s3, list_objects, fun(_, _, _) -> [] end),
+    ok = meck:expect(erlcloud_aws, auto_config, fun() -> {ok, autoconfig} end),
+    ok = meck:expect(sssftp_user_session, get, fun(user_auth_server, _) -> {ok, "USER"} end),
+    ok = meck:expect(erlcloud_sts, assume_role, fun(autoconfig,
+                                                    "AWS_ROLE",
+                                                    "sssftp",
+                                                    _Seconds,
+                                                    "EXTERNAL_ID") -> {assumedConfig, foo} end),
     {{ok, "/"}, _State} = ?MUT:get_cwd(InitState),
 
     true = meck:validate(erlcloud_s3),
